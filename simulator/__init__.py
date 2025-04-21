@@ -11,6 +11,7 @@ CFG_FILES = {
     'ex_2': os.path.join(path, 'cfg', 'ex_2.yaml')
 }
 
+# TODO make path dynamic
 ROOT_DIR = "/home/bk21562/git/metric_extraction"
 MODEL_ROOT = os.path.join(ROOT_DIR, 'models')
 STATS_ROOT = os.path.join(ROOT_DIR, 'stats')
