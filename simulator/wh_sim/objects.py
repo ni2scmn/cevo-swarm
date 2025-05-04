@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from scipy.spatial.distance import cdist
+import random
 
 class Robot:
 
@@ -46,7 +47,9 @@ class Swarm:
             self.robot_lifter = np.append(self.robot_lifter, np.full(num, ag_obj.lifter_state))
         
         self.number_of_agents = total_agents
+        # TODO combine agent_has_box and agent_box_id
         self.agent_has_box = np.zeros(self.number_of_agents) # agents start with no box
+        self.agent_box_id = np.zeros(self.number_of_agents)*(-1) # record of box id that agent is carrying
         self.heading = 0.0314*np.random.randint(-100, 100, self.number_of_agents) # initial heading for all robots is randomly chosen
         self.computed_heading = self.heading # this is computed heading after force calculations are completed
         self.computed_heading_prev = {} # stores previous computed heading
@@ -54,31 +57,70 @@ class Swarm:
     def init_params(self,cfg):
         # box interaction probabilities
         culture = cfg.get('culture')
+        self.no_ap = len(cfg.get('ap'))
+        self.no_box_t = len(cfg.get('box_type_ratio'))
+        self.influence_rate = []
+        self.resistance_rate = []
 
-        self.base_pickup_p = []
-        self.base_dropoff_p = []
-        self.P_m = np.array([])
-        self.D_m = np.array([])
-        for subculture in culture:
-            no_agents = math.floor(self.number_of_agents*subculture['ratio'])
-            base_pickup_p = [subculture['base_pickup_p']]*no_agents
-            base_dropoff_p = [subculture['base_dropoff_p']]*no_agents
-            P_m = np.tile(subculture['P_m'],(1,no_agents)).flatten()
-            D_m = np.tile(subculture['P_m'],(1,no_agents)).flatten()
-            self.base_pickup_p += base_pickup_p
-            self.base_dropoff_p += base_dropoff_p
+        # Behavioural parameters : used in their behaviour
+        self.P_m = np.array([]) # pickup probability parameter
+        self.D_m = np.array([]) # dropoff probability parameter
+        self.SC = np.array([]) # amplification factor threshold for stone count
+        self.r0 = np.array([]) # wall template radius from aggregation point (i.e. nest site)
+
+        # Belief space parameters
+        self.BS_P_m = np.array([])  # pickup probability parameter
+        self.BS_D_m = np.array([])  # dropoff probability parameter
+        self.BS_SC = np.array([])  # amplification factor threshold for stone count
+        self.BS_r0 = np.array([])  # wall template radius from aggregation point (i.e. nest site)
+
+        for subc in culture:
+            no_agents = math.floor(self.number_of_agents*subc['ratio'])
+            # probably a better way to unpack variables by list.pop() or next()
+            P_m_vec = subc['params'][:self.no_ap]
+            D_m_vec = subc['params'][self.no_ap:2*self.no_ap]
+            SC_vec = subc['params'][2*self.no_ap:2*self.no_ap+self.no_box_t]
+            r0_vec = subc['params'][2*self.no_ap+self.no_box_t:2*self.no_ap+2*self.no_box_t]
+            P_m = np.tile(P_m_vec,(1,no_agents)).flatten()
+            D_m = np.tile(D_m_vec,(1,no_agents)).flatten()
+            SC = np.tile(SC_vec,(1,no_agents)).flatten()
+            r0 = np.tile(r0_vec,(1,no_agents)).flatten()
             self.P_m = np.concatenate((self.P_m,P_m))
             self.D_m = np.concatenate((self.D_m,D_m))
-        
-        self.base_pickup_p = np.array(self.base_pickup_p)
-        self.base_dropoff_p = np.array(self.base_dropoff_p)
+            self.SC = np.concatenate((self.SC,SC))
+            self.r0 = np.concatenate((self.r0,r0))
 
-        # reduce parameters below
-        # add factor for box type
-        self.G_max = 1.5
-        self.G_min = 0.2
-        self.F_max = 1.5
-        self.F_min = 0.2
+            if subc.get("use_fixed_rates", True):
+                inf_rate = subc.get("influence_rate", 0.5)
+                res_rate = subc.get("resistance_rate", 0.5)
+                self.influence_rate.extend([inf_rate] * no_agents)
+                self.resistance_rate.extend([res_rate] * no_agents)
+            else:
+                inf_range = subc.get("influence_range", (0.4, 0.9))
+                res_range = subc.get("resistance_range", (0.2, 0.8))
+                for _ in range(no_agents):
+                    self.influence_rate.append(random.uniform(*inf_range))
+                    self.resistance_rate.append(random.uniform(*res_range))
+
+        self.influence_rate = np.array(self.influence_rate)
+        self.resistance_rate = np.array(self.resistance_rate)
+
+        # initialise the belief space
+        self.BS_P_m = self.P_m
+        self.BS_D_m = self.D_m
+        self.BS_SC = self.SC
+        self.BS_r0 = self.r0
+
+        # fixed parameters: in future these could also be evolved in the belief space
+        self.G_max = 0.55
+        self.G_min = 0.01
+        self.F_max = 0.55
+        self.F_min = 0.01
+        self.base_pickup_p = 0.1
+        self.base_dropoff_p = 0.1
+
+        # init computed metrics
+        self.box_in_range = np.zeros(self.number_of_agents)
 
     # @TODO allow for multiple behaviours, heterogeneous swarm
     def iterate(self, *args, **kwargs):
@@ -101,7 +143,7 @@ class Swarm:
         F_wall_avoidance = self._generate_wall_avoidance_force(rob_c, map)
 
         # Movement vectors summed
-        F_agent += F_wall_avoidance + self.F_heading + F_box.T
+        F_agent += F_wall_avoidance + self.F_heading #+ F_box.T ## TODO remove F_box force to allow robots to move through boxes
         F_x = F_agent.T[0] # Repulsion vector in x
         F_y = F_agent.T[1] # in y 
         
@@ -126,25 +168,31 @@ class Swarm:
         return True
 
     # amplification for pickup
-    def _G(self,p,box_in_range):
-        if box_in_range < 2:
+    def _G(self,p,rob_id,SC):
+        no_in_range = self.box_in_range[rob_id]
+        if no_in_range < SC:
             p_ = self.G_max*p
         else:
             p_ = self.G_min*p
-        
+            
         return min(p_,1)
 
     # amplification for dropoff
-    def _F(self,p,box_in_range): 
+    def _F(self,p,rob_id,SC): 
         p_ = p
-        amp_max = np.argwhere(box_in_range > 2)
-        amp_min = np.argwhere(box_in_range <= 2)
+        no_in_range = self.box_in_range[rob_id]
+        box_in_range = self.box_in_range[rob_id]
+        amp_max = np.argwhere(box_in_range > SC)
+        amp_min = np.argwhere(box_in_range <= SC)
         p_[amp_max] *= self.F_max
         p_[amp_min] *= self.F_min
 
         return np.minimum(p_,np.ones(len(p)))
 
-    def pickup_box(self, warehouse):
+    def pickup_box(self, warehouse, robots=None):
+        if robots is None:
+            robots = list(range(warehouse.number_of_agents))
+
         dist_rob_to_box = cdist(warehouse.box_c, warehouse.rob_c) # calculates the euclidean distance from every robot to every box (centres)
         is_closest_rob_in_range = np.min(dist_rob_to_box, 1) < warehouse.box_range # if the minimum distance box-robot is less than the pick up sensory range, then qu_close_box = 1
         closest_rob_id = np.argmin(dist_rob_to_box, 1)	
@@ -154,50 +202,76 @@ class Swarm:
 		# needs to be a loop (rather than vectorised) in case two robots are close to the same box
         for box_id in to_pickup:
             closest_r = closest_rob_id[box_id][0]
+            if closest_r not in robots:
+                continue
+            
             is_robot_carrying_box = warehouse.is_robot_carrying_box(closest_r)
-            # Check if robot is already carrying a box: if not, then set robot to "lift" the box (may fail if faulty)
-            if is_robot_carrying_box == 0:
-                # check pickup probability for closest ap
-                d_ap = cdist(warehouse.ap, warehouse.box_c[box_id])
-                closest_ap = np.argmin(d_ap,0)
-                d = np.min(d_ap,0)
+            # Check if robot is already carrying a box
+            if is_robot_carrying_box == 1:
+                continue
+            
+            # check pickup probability for closest ap
+            d_ap = cdist(warehouse.ap, warehouse.box_c[box_id])
+            closest_ap = np.argmin(d_ap,0)
+            d = np.min(d_ap,0)
+            box_type = warehouse.box_types[box_id]
+            # if points out of range, probability of pickup is fixed at base rate
+            if d > self.camera_sensor_range_V[closest_r]:
+                p = self.base_pickup_p
+            else:
+                d_ = (d*2/self.camera_sensor_range_V[closest_r]).flatten()
                 ap = warehouse.ap[closest_ap]
-                box_type = warehouse.box_types[box_id]
-                # if points out of range, probability of pickup is fixed at base rate
-                if d > self.camera_sensor_range_V[closest_r]:
-                    p = self.base_pickup_p[closest_r]
-                else:
-                    d_ = (d*2/self.camera_sensor_range_V[closest_r]).flatten()
-                    P_m = self.P_m[closest_r*warehouse.number_of_box_types+box_type]
-                    p = P_m*( 1 - 1/(1+d_*d_) ).flatten()
-                    p = self._G(p, self.box_in_range[closest_r])
-                
-                pickup = np.random.binomial(1,p)
-                # print("pick  ",d," ",p,'\n')
-                if pickup and warehouse.swarm.set_agent_box_state(closest_r, 1):
-                    warehouse.box_is_free[box_id] = 0 # change box state to 0 (not free, on a robot)
-                    warehouse.box_c[box_id] = warehouse.rob_c[closest_r] # change the box centre so it is aligned with its robot carrier's centre
-                    warehouse.robot_carrier[box_id] = closest_r # set the robot_carrier for box b to that robot ID
+                idx = closest_r*len(warehouse.ap)+closest_ap
+                param_idx = closest_r*warehouse.number_of_box_types + box_type
+                SC = self.SC[param_idx]*warehouse.number_of_boxes # SC is in range [0,1]
+                r0 = self.r0[param_idx]*min(warehouse.width,warehouse.height)
 
-    def dropoff_box(self, warehouse):
+                p = self.P_m[idx]*( 1 - 1/(1+(d_-r0)*(d_-r0)) ).flatten()
+                p = self._G(p, closest_r, SC)
+            
+            pickup = np.random.binomial(1,p)
+            if pickup and warehouse.swarm.set_agent_box_state(closest_r, 1):
+                warehouse.box_is_free[box_id] = 0 # change box state to 0 (not free, on a robot)
+                warehouse.box_c[box_id] = warehouse.rob_c[closest_r] # change the box centre so it is aligned with its robot carrier's centre
+                warehouse.robot_carrier[box_id] = closest_r # set the robot_carrier for box b to that robot ID
+                self.agent_box_id[closest_r] = box_id # set box id
+
+    def dropoff_box(self, warehouse, robots=None):
+        if robots is None:
+            robots = list(range(warehouse.number_of_agents))
+
+        # first get the robots who are carrying boxes AND in the robots array
+        rob_id = np.intersect1d(np.argwhere(self.agent_has_box == 1),robots)
+        # get the boxes they are carrying
         # active box coordinates
-        active_box_id = np.argwhere(warehouse.box_is_free == 0).flatten()
+        active_box_id = self.agent_box_id[rob_id].astype(int) #np.argwhere(warehouse.box_is_free == 0).flatten()
         active_c = warehouse.box_c[active_box_id]
         if len(active_c) == 0:
             return []
         
-        rob_id = warehouse.robot_carrier[active_box_id]
+        # rob_id = warehouse.robot_carrier[active_box_id] # vector of carriers
         d = cdist(np.tile(warehouse.ap, (len(active_c),1)), active_c)
-        d_ = d[0]*2/self.camera_sensor_range_V[rob_id] # scale down by factor cam_range/2
-        idx = rob_id*warehouse.number_of_box_types+warehouse.box_types[rob_id]
-        p = self.D_m[idx]/(1+d_*d_)
-        p = self._F(p,self.box_in_range[rob_id])
-        # if points out of range, probability of dropoff is fixed at base rate
-        in_range = (d[0] <= self.camera_sensor_range_V[rob_id])
-        p = p*in_range + self.base_dropoff_p[rob_id]*(1-in_range)
+        d = d[:len(warehouse.ap)]
+        # get the closest aggregation point
+        d1 = np.min(d,axis=0)
+        ap_idx = np.argmin(d,axis=0)
+        d2 = d1*2/self.camera_sensor_range_V[rob_id] # scale down by factor cam_range/2
+        
+        idx = rob_id*len(warehouse.ap)+ap_idx
+        box_types = warehouse.box_types[active_box_id]
+        param_idx = rob_id*self.no_box_t + box_types
+        SC = self.SC[param_idx]*warehouse.number_of_boxes # SC is in range [0,1]
+        r0 = self.r0[param_idx]*min(warehouse.width,warehouse.height)
+        p = self.D_m[idx]/(1+(d2-r0)*(d2-r0))
+        p = self._F(p,rob_id,SC)
+        
+        # if aggregation points are out of range, probability of dropoff is fixed at base rate
+        in_range = (d1 <= self.camera_sensor_range_V[rob_id])
+        p = p*in_range + self.base_dropoff_p*(1-in_range)
         drop = np.random.binomial(1,p).flatten()
-        # print("drop  ",d[0]," ",p,"   ",in_range,'\n')
-        return drop
+        drop_idx = np.argwhere(drop==1).flatten()
+        drop_box_id = active_box_id[drop_idx]
+        return drop_box_id
 		
     ## Avoidance behaviour for avoiding the warehouse walls ##		
     def _generate_wall_avoidance_force(self, rob_c, map): # input the warehouse map 
@@ -332,7 +406,6 @@ class Swarm:
     #     except Exception as e:
     #         print(e)
 
-    # TODO not used
     def compute_metrics(self):
         # Global
         # self.number_of_agents
@@ -343,20 +416,4 @@ class Swarm:
         # self.agent_dist # number of agents in range
         # self.wall_dist # walls in range
         self.box_in_range = sum(self.box_dist < self.camera_sensor_range_V[0]) # boxes in range
-        # self.in_division # which zone it's currently in
         # self.box_type # what type of box it's carrying
-
-    
-
-class BoidsSwarm(Swarm):
-
-    def __init__(self, repulsion_o, repulsion_w, heading_change_rate=1):
-        super().__init__(repulsion_o, repulsion_w, heading_change_rate)
-        
-        # init parameters
-        self._C = np.ones(self.number_of_agents) # cohesion
-        self._A = np.ones(self.number_of_agents) # alignment
-        self._S = np.ones(self.number_of_agents) # separation
-
-    # def step(self):
-    #     return

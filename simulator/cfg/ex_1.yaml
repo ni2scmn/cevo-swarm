@@ -2,19 +2,43 @@
 
 e_1:
   data_dir: "e_1"
-  description: "2 box types, 2 AP, 1 culture"
-  swarm_behaviour: 1
-  box_type_ratio: [0.5,0.5]
+  description: "1 box type, 1 AP, 1 culture"
+  box_type_ratio: [1.0]
+  phase_ratio: [0,0,1]
   ap:
-    - [0.25,0.25]
-    - [0.75,0.75]
+    - [0.5,0.5]
+
 
   culture:
     - ratio: 1.0
-      base_pickup_p: 0.5
-      base_dropoff_p: 0.1
-      P_m: [0.9,0.1]
-      D_m: [0.8,0.8]
-      ap_f: [2,1,1,1]
+      params: [0.35,0.5,0.15,0.2]
+      # order: Pm, D_m, SC, r0
+      use_fixed_rates: true # Same across all agents in a subculture,
+      influence_rate: 0.6
+      resistance_rate: 0.4
+      # OR Randomly assigned per agent within a range :
+      # use_fixed_rates: false
+      # influence_range: [0.4, 0.8]
+      # resistance_range: [0.3, 0.7]
+
+  influence_r: 100
+
+e_2:
+  data_dir: "e_1"
+  description: "2 box types, 1 AP, 1 culture"
+  box_type_ratio: [0.5,0.5]
+  ap:
+    - [0.5,0.5]
+
+  culture:
+    - ratio: 1.0
+      params: [0.9,0.8,0.5,0.3,0.5,0.3]
+      use_fixed_rates: true # Same across all agents in a subculture,
+      influence_rate: 0.6
+      resistance_rate: 0.4
+      # OR Randomly assigned per agent within a range :
+      # use_fixed_rates: false
+      # influence_range: [0.4, 0.8]
+      # resistance_range: [0.3, 0.7]
 
   influence_r: 100
