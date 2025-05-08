@@ -1,9 +1,9 @@
-
 import numpy as np
 from typing import Any, Callable
 import random
 
 from numpy.typing import NDArray
+
 
 class FeedforwardNN:
     def __init__(self, layers: list[int], weight_init_fun: Callable[[], float]):
@@ -20,8 +20,10 @@ class FeedforwardNN:
             # shape: (layers[i+1], layers[i])
             # bias vector for layer i+1
             # shape: (layers[i+1],)
-            weight_matrix = np.array([[weight_init_fun() for _ in range(layers[i])] for _ in range(layers[i+1])])
-            bias_vector = np.array([weight_init_fun() for _ in range(layers[i+1])])
+            weight_matrix = np.array(
+                [[weight_init_fun() for _ in range(layers[i])] for _ in range(layers[i + 1])]
+            )
+            bias_vector = np.array([weight_init_fun() for _ in range(layers[i + 1])])
 
             self.weights.append(weight_matrix)
             self.biases.append(bias_vector)
@@ -29,7 +31,7 @@ class FeedforwardNN:
     # TODO: activation function configuration
     def sigmoid(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
         return x
-        #return 1 / (1 + np.exp(-x))
+        # return 1 / (1 + np.exp(-x))
 
     def forward(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
         """
@@ -47,7 +49,7 @@ class FeedforwardNN:
         """
         Returns the weights of the neural network as a numpy array.
         """
-        
+
         # return weights and biases as a single numpy array
         # w_layer1 | bias_layer1 | w_layer2 | bias_layer2 | ...
 
@@ -71,8 +73,8 @@ class FeedforwardNN:
             num_biases = self.layers[i + 1]
 
             # reshape the weights and biases
-            W = weights[idx:idx+num_weights].reshape((self.layers[i + 1], self.layers[i]))
-            b = weights[idx+num_weights:idx+num_weights + num_biases]
+            W = weights[idx : idx + num_weights].reshape((self.layers[i + 1], self.layers[i]))
+            b = weights[idx + num_weights : idx + num_weights + num_biases]
 
             # set the weights and biases
             self.weights[i] = W
@@ -87,6 +89,7 @@ def random_init() -> float:
     """
     return random.random() * 2 - 1
 
+
 # nn = FeedforwardNN([4, 4], random_init)
 
 # print(nn.weights)
@@ -99,6 +102,8 @@ def random_init() -> float:
 
 nn = FeedforwardNN([2, 3, 2], random_init)
 nn.set_weights(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]))
-nn.set_weights(np.array([0.7, -0.2, 1, 0, 0.1, -1, 0.2, -0.1, -0.3, 1, -0.6, -1, 0.3, 0, 0.3, 0.1, 0.2]))
+nn.set_weights(
+    np.array([0.7, -0.2, 1, 0, 0.1, -1, 0.2, -0.1, -0.3, 1, -0.6, -1, 0.3, 0, 0.3, 0.1, 0.2])
+)
 print(nn.get_weights())
 print(nn.forward(np.array([1, -1])))
