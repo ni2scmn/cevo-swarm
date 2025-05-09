@@ -6,7 +6,14 @@ from numpy.typing import NDArray
 
 
 class FeedforwardNN:
-    def __init__(self, layers: list[int], weight_init_fun: Callable[[], float]):
+    def __init__(
+        self,
+        layers: list[int],
+        weight_init_fun: Callable[[], float],
+        activation_fun: Callable[[NDArray[np.float64]], NDArray[np.float64]]
+        | list[Callable[[NDArray[np.float64]], NDArray[np.float64]]]
+        | None = None,
+    ):
         """
         layers: List of layer sizes, e.g., [3, 5, 2] for 3 input neurons, 5 hidden, 2 output
         weight_init_fun: A function returning a float, used to initialize weights
@@ -14,6 +21,19 @@ class FeedforwardNN:
         self.layers: list[int] = layers
         self.weights: list[NDArray[np.float64]] = []
         self.biases: list[NDArray[np.float64]] = []
+
+        self.activation_fun: list[Callable[[NDArray[np.float64]], NDArray[np.float64]]]
+        # if activation_fun is None, use identity function
+        # if activation_fun is a list, use that list
+        # if activation_fun is a function, use that function for all layers
+        if activation_fun is None:
+            self.activation_fun = [lambda x: x] * (len(layers) - 1)
+        elif isinstance(activation_fun, list):
+            if len(activation_fun) != len(layers) - 1:
+                raise ValueError("activation_fun must be a list of length len(layers) - 1")
+            self.activation_fun = activation_fun
+        else:
+            self.activation_fun = [activation_fun] * (len(layers) - 1)
 
         for i in range(len(layers) - 1):
             # weight matrix for layer i to layer i+1
@@ -28,11 +48,6 @@ class FeedforwardNN:
             self.weights.append(weight_matrix)
             self.biases.append(bias_vector)
 
-    # TODO: activation function configuration
-    def sigmoid(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
-        return x
-        # return 1 / (1 + np.exp(-x))
-
     def forward(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Perform a forward pass.
@@ -40,9 +55,9 @@ class FeedforwardNN:
         Returns: Output of the final layer
         """
         activation = x
-        for W, b in zip(self.weights, self.biases):
+        for i, (W, b) in enumerate(zip(self.weights, self.biases)):
             z = W @ activation + b
-            activation = self.sigmoid(z)
+            activation = self.activation_fun[i](z)
         return activation
 
     def get_weights(self) -> NDArray[np.float64]:
@@ -90,6 +105,10 @@ def random_init() -> float:
     return random.random() * 2 - 1
 
 
+def sigmoid(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    return 1 / (1 + np.exp(-x))
+
+
 # nn = FeedforwardNN([4, 4], random_init)
 
 # print(nn.weights)
@@ -100,10 +119,10 @@ def random_init() -> float:
 # print(nn.get_weights())
 # print(nn.forward(np.array([1, 0, 0, 1])))
 
-nn = FeedforwardNN([2, 3, 2], random_init)
-nn.set_weights(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]))
-nn.set_weights(
-    np.array([0.7, -0.2, 1, 0, 0.1, -1, 0.2, -0.1, -0.3, 1, -0.6, -1, 0.3, 0, 0.3, 0.1, 0.2])
-)
-print(nn.get_weights())
-print(nn.forward(np.array([1, -1])))
+# nn = FeedforwardNN([2, 3, 2], random_init)
+# nn.set_weights(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]))
+# nn.set_weights(
+#     np.array([0.7, -0.2, 1, 0, 0.1, -1, 0.2, -0.1, -0.3, 1, -0.6, -1, 0.3, 0, 0.3, 0.1, 0.2])
+# )
+# print(nn.get_weights())
+# print(nn.forward(np.array([1, -1])))
