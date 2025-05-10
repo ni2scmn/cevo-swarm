@@ -25,7 +25,6 @@ class Simulator:
     ):
         self.cfg = config
         self.verbose = verbose
-        # self.state_changes = 0 # intended to log changes in the system from normal (if faults are injected mid-runtime for example)
         self.exit_threads = False
 
         if random_seed is None:
@@ -40,6 +39,7 @@ class Simulator:
         except Exception as e:
             raise e
 
+        print(self.cfg.get('phase_change_rate'))
         # CA evo
         self.warehouse = CA(
             self.cfg.get("warehouse", "width"),
@@ -47,11 +47,11 @@ class Simulator:
             self.cfg.get("warehouse", "number_of_boxes"),
             self.cfg.get("warehouse", "box_radius"),
             self.swarm,
-            self.cfg.get("warehouse", "object_position"),
-            self.cfg.get("box_type_ratio"),
-            self.cfg.get("phase_ratio"),
-            self.cfg.get("influence_r"),
-        )
+            self.cfg.get('warehouse', 'object_position'),
+            self.cfg.get('box_type_ratio'),
+            self.cfg.get('phase_ratio'),
+            self.cfg.get('phase_change_rate'),
+            self.cfg.get('influence_r'))     
 
         self.warehouse.generate_ap(self.cfg)
         self.warehouse.verbose = self.verbose
@@ -108,10 +108,10 @@ class Simulator:
         while self.warehouse.counter <= self.cfg.get("time_limit"):
             self.iterate()
             if self.export_data:
-                self.log_CA_data()
-                if self.warehouse.counter in self.export_ts:
-                    self.log_data()
-
+              self.log_CA_data()
+              if self.warehouse.counter in self.export_ts:
+                self.log_data()
+        
         if self.verbose:
             print("\n")
 
