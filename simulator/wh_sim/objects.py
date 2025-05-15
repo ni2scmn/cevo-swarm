@@ -2,6 +2,7 @@ import numpy as np
 import math
 from scipy.spatial.distance import cdist
 import random
+from collections import deque
 
 
 class Robot:
@@ -136,10 +137,22 @@ class Swarm:
         self.base_pickup_p = 0.1
         self.base_dropoff_p = 0.1
         self.tau = 0.025
+        self.mem_size = 50
 
         # init computed metrics
         self.box_in_range = np.zeros(self.number_of_agents)
-
+        self.box_in_range_mem = np.zeros((self.number_of_agents,self.mem_size))
+        self.box_t_in_range = np.zeros(self.number_of_agents)
+        self.box_t_in_range_mem = np.zeros((self.number_of_agents,self.mem_size))
+       
+        self.novelty_behav = np.zeros(self.number_of_agents)
+        self.novelty_behav_mem = []
+        for _ in range(self.number_of_agents):
+            self.novelty_behav_mem.append({
+                attr: deque(maxlen=self.mem_size) for attr in ['P_m', 'D_m', 'SC', 'r0']
+            })
+        self.novelty_env = np.zeros(self.number_of_agents)
+        
     # @TODO allow for multiple behaviours, heterogeneous swarm
     def iterate(self, *args, **kwargs):
         self.update_hook()  # allow for updates to the swarm
@@ -433,46 +446,7 @@ class Swarm:
 
         return (F_box_total, F_agent)
 
-    # TODO delete - not used
-    # Check if a collision has occurred and in those cases, generate a rebound force
-    # Call before random walk (which generates random movement)
-    # def check_collision(self, warehouse, respect_physics=False):
-    #     try:
-    #         no_agents = self.number_of_agents
-    #         no_boxes = warehouse.number_of_boxes
-    #         box_ag_dist = self.box_dist # shape (box_no, agent_no)
-    #         ag_ag_dist = self.agent_dist
-    #         ag_r = self.robot_r
-    #         box_r = warehouse.radius
-
-    #         # if interobject distance is < obj1_r+obj2_r, then we have a collision
-    #         tile_box_ag = np.tile(ag_r, (no_boxes, 1)) + np.transpose(np.tile(box_r, (no_agents, no_boxes)))
-    #         tile_ag_ag = np.tile(ag_r, (no_agents, 1))*2
-
-    #         col_box_ag = box_ag_dist < tile_box_ag
-    #         col_ag_ag = ag_ag_dist < tile_ag_ag
-
-    #         box_collisions = np.sum(col_box_ag, axis=1)
-    #         agent_collisions = np.sum(col_ag_ag, axis=1) - 1
-
-    #         if not respect_physics:
-    #             return box_collisions, agent_collisions, warehouse.rob_d
-
-    #         # remember to take into account picking up boxes
-    #         # warehouse.rob_d
-    #         # warehouse.rob_c
-    #         # warehouse.box_c
-    #         # cdist(box_c, rob_c)
-
-    #         # print(ag_ag_dist)
-    #         # print(self.counter)
-    #         # time.sleep(600)
-    #         # exit()
-    #         # print('ag', b.shape)
-    #     except Exception as e:
-    #         print(e)
-
-    def compute_metrics(self):
+    def compute_metrics(self, warehouse):
         # Global
         # self.number_of_agents
         # self.number_of_boxes
@@ -481,5 +455,94 @@ class Swarm:
         # Local
         # self.agent_dist # number of agents in range
         # self.wall_dist # walls in range
-        self.box_in_range = sum(self.box_dist < self.camera_sensor_range_V[0])  # boxes in range
-        # self.box_type # what type of box it's carrying
+        in_range = self.box_dist < self.camera_sensor_range_V[0]
+        self.box_in_range = sum(in_range) # boxes in range
+        tile_box_t = np.tile(warehouse.box_types,(self.number_of_agents,1))+1 # add 1 to box type ID
+        bt_in_range = in_range.astype(int)*tile_box_t.T
+        for idx, it in enumerate(bt_in_range.T):
+            self.box_t_in_range[idx] = sum(np.unique(it))
+        
+        # Novelty metrics
+        self.compute_novelty_behaviour(warehouse)
+        self.compute_novelty_environment(warehouse)
+
+    # TODO vectorize ~
+    def compute_novelty_behaviour(self, warehouse):
+        # Step 1: Observe and add neighbors' behaviors to memory
+        for agent_id in range(self.number_of_agents):
+            for attr in ['P_m', 'D_m', 'SC', 'r0']:
+                source_array = getattr(self, attr)
+                param_size = self.no_ap if attr in ['P_m', 'D_m'] else self.no_box_t
+
+                for neighbor_id in range(self.number_of_agents):
+                    if neighbor_id == agent_id:
+                        continue
+                    if self.agent_dist[agent_id][neighbor_id] < warehouse.influence_r:
+                        neighbor_start = neighbor_id * param_size
+                        neighbor_values = source_array[neighbor_start:neighbor_start + param_size]
+                        self.novelty_behav_mem[agent_id][attr].append(tuple(neighbor_values))
+
+        # Step 2: Compute novelty from memory only (concatenated behavior vector)
+        self.novelty_behav = [0.0] * self.number_of_agents
+        for agent_id in range(self.number_of_agents):
+            agent_vector = []
+            memory_vectors = []
+
+            # Build full behavior vector for current agent and memory
+            for attr in ['P_m', 'D_m', 'SC', 'r0']:
+                source_array = getattr(self, attr)
+                param_size = self.no_ap if attr in ['P_m', 'D_m'] else self.no_box_t
+                agent_start = agent_id * param_size
+                agent_vector.extend(source_array[agent_start:agent_start + param_size])
+
+                # Collect all past neighbor behavior vectors for this attribute
+                for i, past in enumerate(self.novelty_behav_mem[agent_id][attr]):
+                    # Make sure memory_vectors[i] exists and is extendable
+                    if len(memory_vectors) <= i:
+                        memory_vectors.append(list(past))
+                    else:
+                        memory_vectors[i].extend(past)
+
+            # Now compute Euclidean distance from agent_vector to each memory_vector
+            total_diff = 0.0
+            for past_vector in memory_vectors:
+                diff = sum((a - b) ** 2 for a, b in zip(agent_vector, past_vector)) ** 0.5
+                total_diff += diff
+
+            comparisons = len(memory_vectors)
+            self.novelty_behav[agent_id] = total_diff / comparisons if comparisons > 0 else 0.0
+
+        # Normalize novelty if needed
+        # if max(self.novelty_behav) > 0:
+        #     max_val = max(self.novelty_behav)
+        #     self.novelty_behav = [n / max_val for n in self.novelty_behav]
+
+        return self.novelty_behav
+
+    def compute_novelty_environment(self,warehouse):
+        time_idx = self.counter%self.mem_size # compute env perception and store in idx
+        # env perception is a function of number of boxes and types of boxes (to simplify things)
+        self.box_in_range_mem[:,time_idx] = self.box_in_range
+        self.box_t_in_range_mem[:,time_idx] = self.box_t_in_range
+        
+        # compare first half of memory to last half
+        if time_idx + self.mem_size/2 > self.mem_size:
+            end_idx = time_idx-int(self.mem_size/2)
+            old_b = np.sum(self.box_in_range_mem[:,time_idx:],axis=1)+np.sum(self.box_in_range_mem[:,:end_idx],axis=1)
+            new_b = np.sum(self.box_in_range_mem[:,end_idx:time_idx],axis=1)
+            # box type
+            old_bt = np.sum(self.box_t_in_range_mem[:,time_idx:],axis=1)+np.sum(self.box_t_in_range_mem[:,:end_idx],axis=1)
+            new_bt = np.sum(self.box_t_in_range_mem[:,end_idx:time_idx],axis=1)
+        else:
+            end_idx = time_idx + int(self.mem_size/2)
+            old_b = np.sum(self.box_in_range_mem[:,time_idx:end_idx],axis=1)
+            new_b = np.sum(self.box_in_range_mem[:,:time_idx],axis=1)+np.sum(self.box_in_range_mem[:,end_idx:],axis=1)
+            # box type
+            old_bt = np.sum(self.box_t_in_range_mem[:,time_idx:end_idx],axis=1)
+            new_bt = np.sum(self.box_t_in_range_mem[:,:time_idx],axis=1)+np.sum(self.box_t_in_range_mem[:,end_idx:],axis=1)
+        
+        nov = abs(new_b-old_b)/self.mem_size#/warehouse.number_of_boxes
+        amp_f = 1 + np.log(abs(old_bt-new_bt)/self.mem_size+1)/2
+        
+        self.novelty_env = np.minimum(np.ones(self.number_of_agents),amp_f*nov/20)
+        print(self.novelty_env,"\n")
