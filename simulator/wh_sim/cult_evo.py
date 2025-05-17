@@ -17,23 +17,39 @@ class CA(Warehouse):
     PHASE_UPDATE_BEHAVIOUR = 1
     PHASE_EXECUTE_BEHAVIOUR = 2
 
-    def __init__(self, width, height, number_of_boxes, box_radius, swarm,
-		init_object_positions=Warehouse.RANDOM_OBJ_POS, 
-        box_type_ratio=[1], phase_ratio=[0.3,0.3,0.4], phase_change_rate=10, influence_r=100,
-        adaptive_rate_tuning=False):
-        super().__init__(width, height, number_of_boxes, box_radius, swarm,
-		    init_object_positions=init_object_positions, box_type_ratio=box_type_ratio)
-        
+    def __init__(
+        self,
+        width,
+        height,
+        number_of_boxes,
+        box_radius,
+        swarm,
+        init_object_positions=Warehouse.RANDOM_OBJ_POS,
+        box_type_ratio=[1],
+        phase_ratio=[0.3, 0.3, 0.4],
+        phase_change_rate=10,
+        influence_r=100,
+        adaptive_rate_tuning=False,
+    ):
+        super().__init__(
+            width,
+            height,
+            number_of_boxes,
+            box_radius,
+            swarm,
+            init_object_positions=init_object_positions,
+            box_type_ratio=box_type_ratio,
+        )
+
         self.influence_r = influence_r
         self.phase_ratio = phase_ratio
         self.social_transmission = []
         self.self_updates = []
         self.r_phase = np.array([])
-        self.phase_change_rate = 10 #phase_change_rate
+        self.phase_change_rate = 10  # phase_change_rate
         self.verbose = True
-        self.continuous_traits = ['P_m', 'D_m', 'SC', 'r0']
+        self.continuous_traits = ["P_m", "D_m", "SC", "r0"]
         self.adapt_rate = adaptive_rate_tuning
-
 
     # def update_hook(self):
     #
@@ -103,14 +119,18 @@ class CA(Warehouse):
             np.array((active_boxes, active_boxes)).T * self.rob_d[self.robot_carrier]
         )  # move the boxes by the amount equal to the robot carrying them
         self.box_c = self.box_c + self.box_d
-		
+
         self.swarm.compute_metrics(self)
-        s,u,e = self.select_phase()   
+        s, u, e = self.select_phase()
         self.socialize(s)
         self.update(u)
         self.execute_pickup_dropoff(e)
 
-        if self.adapt_rate and self.counter > self.swarm.mem_size and self.counter%self.swarm.mem_size == 0:
+        if (
+            self.adapt_rate
+            and self.counter > self.swarm.mem_size
+            and self.counter % self.swarm.mem_size == 0
+        ):
             self.adaptive_rate_tuning()
 
         self.counter += 1
@@ -171,14 +191,22 @@ class CA(Warehouse):
                 start_infce = influencee * param_size
 
                 for i in range(param_size):
-                    if attr in self.continuous_traits :
+                    if attr in self.continuous_traits:
                         v_inf = source_array[start_inf + i]
                         v_infce = source_array[start_infce + i]
                         if random.random() < influence_prob:
-                            new_value = v_infce + weight * (v_inf - v_infce) + random.gauss(0,noise_strength)
+                            new_value = (
+                                v_infce
+                                + weight * (v_inf - v_infce)
+                                + random.gauss(0, noise_strength)
+                            )
                             target_array[start_infce + i] = min(max(new_value, 0), 1)
                         if random.random() < reverse_influence_prob:
-                            new_value = v_inf - rev_weight * (v_inf - v_infce) + random.gauss(0,noise_strength)
+                            new_value = (
+                                v_inf
+                                - rev_weight * (v_inf - v_infce)
+                                + random.gauss(0, noise_strength)
+                            )
                             target_array[start_inf + i] = min(max(new_value, 0), 1)
                     else:
                         if random.random() < influence_prob:
@@ -186,13 +214,8 @@ class CA(Warehouse):
                         if random.random() < reverse_influence_prob:
                             target_array[start_inf + i] = source_array[start_infce + i]
 
-
-
-
-
                 # After the update, store the modified target_array back to self.BS_
                 setattr(self.swarm, f"BS_{attr}", target_array)
-
 
     # TODO asynchronous evo ?
     # This is called after the main step function (step forward in swarm behaviour)
@@ -215,10 +238,12 @@ class CA(Warehouse):
                     v_behavior = target_array[start_index + i]
                     v_belief = source_array[start_index + i]
 
-                    if attr in self.continuous_traits :
+                    if attr in self.continuous_traits:
                         # Gradual update for continuous traits with noise
                         new_value = (
-                                v_behavior + weight * (v_belief - v_behavior) + random.gauss(0, noise_strength)
+                            v_behavior
+                            + weight * (v_belief - v_behavior)
+                            + random.gauss(0, noise_strength)
                         )
                         target_array[start_index + i] = min(max(new_value, 0), 1)
                     else:
@@ -226,23 +251,21 @@ class CA(Warehouse):
                         if random.random() < weight:  # Use weight as probability for the update
                             target_array[start_index + i] = v_belief  # Full adoption of belief
 
-
                 # After the update, store the modified target_array back to self.BS_
                 setattr(self.swarm, attr, target_array)
 
     def adaptive_rate_tuning(self, alpha_inf=0.05, alpha_res=-1):
+        """
+        Updates each agent's rates based on novelty.
+        * eta_alpha :  between 0 and 1 ,
+        Learning Rate controls how quickly the influence rate changes based on novelty
+        * gamma_alpha : between -1 and 1
+        Sensitivity parameter controls direction and magnitude of the update,
 
         """
-           Updates each agent's rates based on novelty.
-           * eta_alpha :  between 0 and 1 ,
-           Learning Rate controls how quickly the influence rate changes based on novelty
-           * gamma_alpha : between -1 and 1
-           Sensitivity parameter controls direction and magnitude of the update,
-
-           """
 
         for agent_id in range(self.swarm.number_of_agents):
-            cur_inf_r= self.swarm.influence_rate[agent_id]
+            cur_inf_r = self.swarm.influence_rate[agent_id]
             cur_res_r = self.swarm.resistance_rate[agent_id]
 
             # Update rule
@@ -252,6 +275,3 @@ class CA(Warehouse):
             # Clamp to [0, 1]
             self.swarm.influence_rate[agent_id] = max(0.0, min(1.0, new_inf_r))
             self.swarm.resistance_rate[agent_id] = max(0.0, min(1.0, new_res_r))
-
-
-

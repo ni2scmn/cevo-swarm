@@ -12,16 +12,17 @@ def draw_frame(box_c):
     fig = plt.figure()
     #     plt.rcParams['font.size'] = '16'
     ax = plt.axes(xlim=(0, 500), ylim=(0, 500))
-    plt.axis('square')
+    plt.axis("square")
 
     marker_size = 5
     ax.plot(
         box_c[0],
         box_c[1],
-        's',
+        "s",
         color="b",
         #         fillstyle = 'none',
-        markersize=marker_size)
+        markersize=marker_size,
+    )
     #         linewidth=2)
 
     plt.xticks([0, 250, 500])
@@ -58,28 +59,29 @@ def draw_multiple_frames(data):
         draw_frame(data[last_key])
         plt.show()  # Show the last frame
 
+
 def animate_frames(data, time_step=1.0):
     keys = sorted(data.keys())
     fig, ax = plt.subplots()
     ax.set_xlim(0, 500)
     ax.set_ylim(0, 500)
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
     plt.xticks([0, 250, 500])
     plt.yticks([0, 250, 500])
 
-    scatter, = ax.plot([], [], 's', color="b", markersize=5)
-    time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
+    (scatter,) = ax.plot([], [], "s", color="b", markersize=5)
+    time_text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
 
     def init():
         scatter.set_data([], [])
-        time_text.set_text('')
+        time_text.set_text("")
         return scatter, time_text
 
     def update(frame_key):
         box_c = data[frame_key]
         scatter.set_data(box_c[0], box_c[1])
         current_time = frame_key * time_step
-        time_text.set_text(f'Time: {current_time:.1f}s')
+        time_text.set_text(f"Time: {current_time:.1f}s")
         return scatter, time_text
 
     anim = FuncAnimation(
@@ -88,16 +90,17 @@ def animate_frames(data, time_step=1.0):
         frames=keys,
         init_func=init,
         blit=True,
-        interval=100  # 100 ms between frames
+        interval=100,  # 100 ms between frames
     )
 
-    #plt.show()
-    anim.save('1746885691_animation.mp4', writer='ffmpeg', fps=10)
+    # plt.show()
+    anim.save("1746885691_animation.mp4", writer="ffmpeg", fps=10)
+
 
 coords_1 = proc_data(pd.read_csv("data/e_1/1746920587/boxes.csv"))
 draw_multiple_frames(coords_1)
 
 
-#df = pd.read_csv('data/e_1/1746831890/boxes.csv')
-#cleaned_data = proc_data(df)
-#animate_frames(cleaned_data)
+# df = pd.read_csv('data/e_1/1746831890/boxes.csv')
+# cleaned_data = proc_data(df)
+# animate_frames(cleaned_data)
