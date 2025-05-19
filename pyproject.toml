@@ -1,0 +1,17 @@
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.pyright]
+reportAny = false
+reportExplicitAny = false
+reportUnusedImport = false
+reportUnknownParameterType = false
+reportMissingParameterType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportUnknownMemberType = false
+reportUnannotatedClassAttribute = false
+reportUninitializedInstanceVariable = false
+reportConstantRedefinition = false
+reportUnusedVariable = false
