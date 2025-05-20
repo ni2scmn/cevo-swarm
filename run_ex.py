@@ -6,7 +6,7 @@ import numpy as np
 
 ###### Experiment parameters ######
 
-ex_id = 'e_1'
+ex_id = "e_1"
 verbose = False
 export_data = True
 
@@ -26,9 +26,20 @@ seed = np.random.randint(0, 10000000)
 st = SaveTo()
 sim = Simulator(cfg_obj, verbose=verbose, random_seed=seed)
 sim.run()
-if export_data:    
-    for key in ["P_m", "D_m", "SC", "r0", "BS_P_m", "BS_D_m", "BS_SC", "BS_r0",
-        "r_phase","influence_rates","resistance_rates"]:
+if export_data:
+    for key in [
+        "P_m",
+        "D_m",
+        "SC",
+        "r0",
+        "BS_P_m",
+        "BS_D_m",
+        "BS_SC",
+        "BS_r0",
+        "r_phase",
+        "influence_rates",
+        "resistance_rates",
+    ]:
         data = sim.CA_data[key]
         st.export_data(ex_id, data, key, transpose=True)
 

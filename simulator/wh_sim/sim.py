@@ -39,7 +39,7 @@ class Simulator:
         except Exception as e:
             raise e
 
-        print(self.cfg.get('phase_change_rate'))
+        print(self.cfg.get("phase_change_rate"))
         # CA evo
         self.warehouse = CA(
             self.cfg.get("warehouse", "width"),
@@ -47,13 +47,14 @@ class Simulator:
             self.cfg.get("warehouse", "number_of_boxes"),
             self.cfg.get("warehouse", "box_radius"),
             self.swarm,
-            self.cfg.get('warehouse', 'object_position'),
-            self.cfg.get('box_type_ratio'),
-            self.cfg.get('phase_ratio'),
-            self.cfg.get('phase_change_rate'),
-            self.cfg.get('influence_r'),
-            self.cfg.get('adaptive_rate_tuning'))     
-        
+            self.cfg.get("warehouse", "object_position"),
+            self.cfg.get("box_type_ratio"),
+            self.cfg.get("phase_ratio"),
+            self.cfg.get("phase_change_rate"),
+            self.cfg.get("influence_r"),
+            self.cfg.get("adaptive_rate_tuning"),
+        )
+
         self.warehouse.generate_ap(self.cfg)
         self.warehouse.verbose = self.verbose
         self.export_data = self.cfg.get("export_data")
@@ -109,10 +110,10 @@ class Simulator:
         while self.warehouse.counter <= self.cfg.get("time_limit"):
             self.iterate()
             if self.export_data:
-              self.log_CA_data()
-              if self.warehouse.counter in self.export_ts:
-                self.log_data()
-        
+                self.log_CA_data()
+                if self.warehouse.counter in self.export_ts:
+                    self.log_data()
+
         if self.verbose:
             print("\n")
 
@@ -126,47 +127,50 @@ class Simulator:
         self.data["rob_c"][self.warehouse.counter] = self.warehouse.rob_c.tolist()
 
     def log_CA_data(self):
-        if 'P_m' not in self.CA_data:
-            self.CA_data['P_m'] = {}
-        if 'D_m' not in self.CA_data:
-            self.CA_data['D_m'] = {}
-        if 'SC' not in self.CA_data:
-            self.CA_data['SC'] = {}
-        if 'r0' not in self.CA_data:
-            self.CA_data['r0'] = {}
-        if 'BS_P_m' not in self.CA_data:
-            self.CA_data['BS_P_m'] = {}
-        if 'BS_D_m' not in self.CA_data:
-            self.CA_data['BS_D_m'] = {}
-        if 'BS_SC' not in self.CA_data:
-            self.CA_data['BS_SC'] = {}
-        if 'BS_r0' not in self.CA_data:
-            self.CA_data['BS_r0'] = {}
-        if 'social_transmission' not in self.CA_data:
-            self.CA_data['social_transmission'] = {}
-        if 'self_updates' not in self.CA_data:
-            self.CA_data['self_updates'] = {}
-        if 'r_phase' not in self.CA_data:
-            self.CA_data['r_phase'] = {}
-        if 'influence_rates' not in self.CA_data:
-            self.CA_data['influence_rates'] = {}
-        if 'resistance_rates' not in self.CA_data:
-            self.CA_data['resistance_rates'] = {}
-        
-        self.CA_data['P_m'][self.warehouse.counter] = self.swarm.P_m.tolist()
-        self.CA_data['D_m'][self.warehouse.counter] = self.swarm.D_m.tolist()
-        self.CA_data['SC'][self.warehouse.counter] = self.swarm.SC.tolist()
-        self.CA_data['r0'][self.warehouse.counter] = self.swarm.r0.tolist()
-        self.CA_data['BS_P_m'][self.warehouse.counter] = self.swarm.BS_P_m.tolist()
-        self.CA_data['BS_D_m'][self.warehouse.counter] = self.swarm.BS_D_m.tolist()
-        self.CA_data['BS_SC'][self.warehouse.counter] = self.swarm.BS_SC.tolist()
-        self.CA_data['BS_r0'][self.warehouse.counter] = self.swarm.BS_r0.tolist()
-        self.CA_data['social_transmission'][self.warehouse.counter] = self.warehouse.social_transmission
-        self.CA_data['self_updates'][self.warehouse.counter] = self.warehouse.self_updates.tolist()
-        self.CA_data['r_phase'][self.warehouse.counter] = self.warehouse.r_phase.tolist()
-        self.CA_data['influence_rates'][self.warehouse.counter] = self.swarm.influence_rate.tolist()
-        self.CA_data['resistance_rates'][self.warehouse.counter] = self.swarm.resistance_rate.tolist()
+        if "P_m" not in self.CA_data:
+            self.CA_data["P_m"] = {}
+        if "D_m" not in self.CA_data:
+            self.CA_data["D_m"] = {}
+        if "SC" not in self.CA_data:
+            self.CA_data["SC"] = {}
+        if "r0" not in self.CA_data:
+            self.CA_data["r0"] = {}
+        if "BS_P_m" not in self.CA_data:
+            self.CA_data["BS_P_m"] = {}
+        if "BS_D_m" not in self.CA_data:
+            self.CA_data["BS_D_m"] = {}
+        if "BS_SC" not in self.CA_data:
+            self.CA_data["BS_SC"] = {}
+        if "BS_r0" not in self.CA_data:
+            self.CA_data["BS_r0"] = {}
+        if "social_transmission" not in self.CA_data:
+            self.CA_data["social_transmission"] = {}
+        if "self_updates" not in self.CA_data:
+            self.CA_data["self_updates"] = {}
+        if "r_phase" not in self.CA_data:
+            self.CA_data["r_phase"] = {}
+        if "influence_rates" not in self.CA_data:
+            self.CA_data["influence_rates"] = {}
+        if "resistance_rates" not in self.CA_data:
+            self.CA_data["resistance_rates"] = {}
 
+        self.CA_data["P_m"][self.warehouse.counter] = self.swarm.P_m.tolist()
+        self.CA_data["D_m"][self.warehouse.counter] = self.swarm.D_m.tolist()
+        self.CA_data["SC"][self.warehouse.counter] = self.swarm.SC.tolist()
+        self.CA_data["r0"][self.warehouse.counter] = self.swarm.r0.tolist()
+        self.CA_data["BS_P_m"][self.warehouse.counter] = self.swarm.BS_P_m.tolist()
+        self.CA_data["BS_D_m"][self.warehouse.counter] = self.swarm.BS_D_m.tolist()
+        self.CA_data["BS_SC"][self.warehouse.counter] = self.swarm.BS_SC.tolist()
+        self.CA_data["BS_r0"][self.warehouse.counter] = self.swarm.BS_r0.tolist()
+        self.CA_data["social_transmission"][self.warehouse.counter] = (
+            self.warehouse.social_transmission
+        )
+        self.CA_data["self_updates"][self.warehouse.counter] = self.warehouse.self_updates.tolist()
+        self.CA_data["r_phase"][self.warehouse.counter] = self.warehouse.r_phase.tolist()
+        self.CA_data["influence_rates"][self.warehouse.counter] = self.swarm.influence_rate.tolist()
+        self.CA_data["resistance_rates"][self.warehouse.counter] = (
+            self.swarm.resistance_rate.tolist()
+        )
 
         self.CA_data["P_m"][self.warehouse.counter] = self.swarm.P_m.tolist()
         self.CA_data["D_m"][self.warehouse.counter] = self.swarm.D_m.tolist()
