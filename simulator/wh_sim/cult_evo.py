@@ -224,38 +224,13 @@ class CA(Warehouse):
     # This is called after the main step function (step forward in swarm behaviour)
     def update(self, agent_ids):
         self.self_updates = agent_ids
-        noise_strength = 0.01  # Small amount of stochasticity
 
-        for id in agent_ids:
-            # Each param: behaviour → BS_ version
-            for attr in ["P_m", "D_m", "SC", "r0"]:
-                target_array = getattr(self.swarm, attr)  # Behaviour param
-                source_array = getattr(self.swarm, f"BS_{attr}")  # belief space param
+        for rob_id in agent_ids:
+            # TODO impl correctly
+            rob_control_weights = self.swarm.agents[rob_id][0].control_network.get_weights()
+            rob_control_weights = np.random.rand(rob_control_weights.shape[0])
+            self.swarm.agents[rob_id][0].control_network.set_weights(rob_control_weights)
 
-                param_size = self.swarm.no_ap if attr in ["P_m", "D_m"] else self.swarm.no_box_t
-
-                start_index = id * param_size
-                weight = 1 - self.swarm.resistance_rate[id]
-
-                for i in range(param_size):
-                    v_behavior = target_array[start_index + i]
-                    v_belief = source_array[start_index + i]
-
-                    if attr in self.continuous_traits:
-                        # Gradual update for continuous traits with noise
-                        new_value = (
-                            v_behavior
-                            + weight * (v_belief - v_behavior)
-                            + random.gauss(0, noise_strength)
-                        )
-                        target_array[start_index + i] = min(max(new_value, 0), 1)
-                    else:
-                        # Probabilistic full copy for discrete traits
-                        if random.random() < weight:  # Use weight as probability for the update
-                            target_array[start_index + i] = v_belief  # Full adoption of belief
-
-                # After the update, store the modified target_array back to self.BS_
-                setattr(self.swarm, attr, target_array)
 
     def adaptive_rate_tuning(self, alpha_inf=0.05, alpha_res=-1):
         """
