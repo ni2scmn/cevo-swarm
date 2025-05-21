@@ -259,27 +259,26 @@ class Swarm:
         rob_can_dropoff = np.array(robots)[dropoff_mask]
 
         for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
-
             r_idx = np.where(robots == rob_id)[0][0]
-            
+
             # robot carry state
             # distance to box
             # type of box
             # distance to aggregation point
-            nn_input = np.array([
-                # robot carry state
-                self.agent_has_box[rob_id],
-                # distance to box
-                rob_min_dists[r_idx],
-                # type of box
-                warehouse.box_types[rob_closest_boxes[r_idx]],
-                # distance to aggregation point
-                rob_ap_min_dists[r_idx],
-            ])
-
-            action = np.argmax(
-                warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input)
+            nn_input = np.array(
+                [
+                    # robot carry state
+                    self.agent_has_box[rob_id],
+                    # distance to box
+                    rob_min_dists[r_idx],
+                    # type of box
+                    warehouse.box_types[rob_closest_boxes[r_idx]],
+                    # distance to aggregation point
+                    rob_ap_min_dists[r_idx],
+                ]
             )
+
+            action = np.argmax(warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input))
 
             # choose action randomly between 0, 1, 2
             # action = np.random.randint(0, 2)

@@ -231,7 +231,6 @@ class CA(Warehouse):
             rob_control_weights = np.random.rand(rob_control_weights.shape[0])
             self.swarm.agents[rob_id][0].control_network.set_weights(rob_control_weights)
 
-
     def adaptive_rate_tuning(self, alpha_inf=0.05, alpha_res=-1):
         """
         Updates each agent's rates based on novelty.

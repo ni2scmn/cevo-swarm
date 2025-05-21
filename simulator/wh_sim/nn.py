@@ -100,28 +100,35 @@ class FeedforwardNN:
 # Activation functions
 ########################################
 
+
 def sigmoid(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return 1 / (1 + np.exp(-x))
+
 
 def tanh(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.tanh(x)
 
+
 def relu(x: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.maximum(0, x)
 
+
 def leaky_relu(x: NDArray[np.float64], alpha: float = 0.01) -> NDArray[np.float64]:
     return np.where(x > 0, x, alpha * x)
+
 
 def softmax(x: NDArray[np.float64]) -> NDArray[np.float64]:
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
 
+
 # Weight initialization functions
 ########################################
+
 
 def random_weight_init(size: int) -> NDArray[np.float64]:
     return np.random.rand(size) * 2 - 1  # Random value between -1 and 1
 
+
 def zero_weight_init(size: int) -> NDArray[np.float64]:
     return np.zeros(size)  # All weights initialized to zero
-
