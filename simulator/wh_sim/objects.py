@@ -245,7 +245,7 @@ class Swarm:
         rob_min_dists = np.min(rob_box_dists, axis=1)
         rob_closest_boxes = np.argmin(rob_box_dists, 1)
 
-        rob_ap_dists = cdist(warehouse.box_c[robots], warehouse.ap)
+        rob_ap_dists = cdist(warehouse.rob_c[robots], warehouse.ap)
         rob_ap_min_dists = np.min(rob_ap_dists, axis=1)
         rob_closest_ap = np.argmin(rob_ap_dists, 1)
 
