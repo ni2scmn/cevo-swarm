@@ -15,7 +15,7 @@ import json
 
 from . import Swarm, CA, Warehouse, Robot
 
-from .nn import FeedforwardNN, random_weight_init
+from .nn import FeedforwardNN, random_weight_init, sigmoid, softmax
 
 
 class Simulator:
@@ -84,7 +84,7 @@ class Simulator:
                 control_network=FeedforwardNN(
                     layers=[4, 5, 3],  # TODO: layer size variation
                     weight_init_fun=random_weight_init,
-                    activation_fun=None,
+                    activation_fun=[sigmoid, softmax]
                 ),
             )
             swarm.add_agents(robot_obj, 1)
