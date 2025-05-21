@@ -71,17 +71,6 @@ class Simulator:
         self.export_ts = list(range(steps, self.cfg.get("time_limit") + 1, steps))
 
     def build_swarm(self, cfg):
-        robot_obj = Robot(
-            cfg.get("robot", "radius"),
-            cfg.get("robot", "max_v"),
-            camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
-            control_network=FeedforwardNN(
-                layers=[3, 5, 3],  # TODO: layer size variation
-                weight_init_fun=lambda: random.uniform(-1, 1),
-                activation_fun=None,
-            ),
-        )
-
         swarm = Swarm(
             repulsion_o=cfg.get("warehouse", "repulsion_object"),
             repulsion_w=cfg.get("warehouse", "repulsion_wall"),
@@ -89,6 +78,16 @@ class Simulator:
         )
 
         for _ in range(cfg.get("warehouse", "number_of_agents")):
+            robot_obj = Robot(
+                cfg.get("robot", "radius"),
+                cfg.get("robot", "max_v"),
+                camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
+                control_network=FeedforwardNN(
+                    layers=[3, 5, 3],  # TODO: layer size variation
+                    weight_init_fun=lambda: random.uniform(-1, 1),
+                    activation_fun=None,
+                ),
+            )
             swarm.add_agents(robot_obj, 1)
 
         swarm.generate()
