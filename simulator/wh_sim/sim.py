@@ -76,15 +76,32 @@ class Simulator:
             heading_change_rate=cfg.get("heading_change_rate"),
         )
 
+        nn_layers = cfg.get("robot", "nn_layers")
+        weight_init = cfg.get("robot", "weight_init")
+        if weight_init == "random":
+            weight_init_fun = random_weight_init
+        else:
+            raise ValueError("Unknown weight init function")
+        activation = cfg.get("robot", "activation_funcs")
+        activation_funcs = []
+
+        for af in activation:
+            if af == "sigmoid":
+                activation_funcs.append(sigmoid)
+            elif af == "softmax":
+                activation_funcs.append(softmax)
+            else:
+                raise ValueError("Unknown activation function")
+
         for _ in range(cfg.get("warehouse", "number_of_agents")):
             robot_obj = Robot(
                 cfg.get("robot", "radius"),
                 cfg.get("robot", "max_v"),
                 camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
                 control_network=FeedforwardNN(
-                    layers=[4, 5, 3],  # TODO: layer size variation
-                    weight_init_fun=random_weight_init,
-                    activation_fun=[sigmoid, softmax]
+                    layers=nn_layers,
+                    weight_init_fun=weight_init_fun,
+                    activation_fun=activation_funcs,
                 ),
             )
             swarm.add_agents(robot_obj, 1)

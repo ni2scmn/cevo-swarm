@@ -5,17 +5,20 @@ import numpy as np
 
 from numpy.typing import NDArray
 
+
 def distance_to_closest_ap(box_c: NDArray, ap_c: NDArray) -> float:
     dists = cdist(box_c, ap_c)
     min_dists = np.min(dists, axis=1)
     print(f"Box shape: {box_c.shape}, AP shape: {ap_c.shape}")
     return np.sum(min_dists) / box_c.shape[0]  # Normalize by box count
 
+
 def fraction_inside_radius(box_c: NDArray, ap_c: NDArray, r: float) -> float:
     dists = cdist(box_c, ap_c)
     min_dists = np.min(dists, axis=1)
     count_inside = np.sum(min_dists < r)
     return count_inside / box_c.shape[0]  # Normalize by box count
+
 
 # dimensions: (x, y)
 def symmetry(box_c: NDArray, dim: tuple, mode: str) -> float:

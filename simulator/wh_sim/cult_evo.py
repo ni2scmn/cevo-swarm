@@ -146,7 +146,7 @@ class CA(Warehouse):
         # metric_symmetry_d1 = symmetry(
         #     self.box_c, (self.width, self.height), "diagonal1"
         # )
-        # metric_symmetry_d2 = symmetry(  
+        # metric_symmetry_d2 = symmetry(
         #     self.box_c, (self.width, self.height), "diagonal2"
         # )
 
