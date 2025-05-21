@@ -1,6 +1,5 @@
 from pathlib import Path
 import sys
-from tkinter import N
 
 dir_root = Path(__file__).resolve().parents[1]
 
@@ -16,7 +15,7 @@ import json
 
 from . import Swarm, CA, Warehouse, Robot
 
-from .nn import FeedforwardNN
+from .nn import FeedforwardNN, random_weight_init
 
 
 class Simulator:
@@ -84,7 +83,7 @@ class Simulator:
                 camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
                 control_network=FeedforwardNN(
                     layers=[4, 5, 3],  # TODO: layer size variation
-                    weight_init_fun=lambda: random.uniform(-1, 1),
+                    weight_init_fun=random_weight_init,
                     activation_fun=None,
                 ),
             )

@@ -126,9 +126,8 @@ def softmax(x: NDArray[np.float64]) -> NDArray[np.float64]:
 ########################################
 
 
-def random_weight_init(size: int) -> NDArray[np.float64]:
-    return np.random.rand(size) * 2 - 1  # Random value between -1 and 1
+def random_weight_init() -> float:
+    return random.uniform(-1, 1)  # Random weight initialization in range [-1, 1]
 
-
-def zero_weight_init(size: int) -> NDArray[np.float64]:
-    return np.zeros(size)  # All weights initialized to zero
+def zero_weight_init() -> float:
+    return 0.0  # Zero weight initialization
