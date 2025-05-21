@@ -10,6 +10,8 @@ import numpy as np
 
 from . import Warehouse
 
+from simulator.lib.metrics import distance_to_closest_ap, fraction_inside_radius, symmetry
+
 
 # Implements swarm with cultural evolution
 class CA(Warehouse):
@@ -128,6 +130,25 @@ class CA(Warehouse):
         self.socialize(s)
         self.update(u)
         self.execute_pickup_dropoff(e)
+
+        # metric_ap_dist = distance_to_closest_ap(
+        #     self.box_c, np.asarray(self.ap)
+        # )
+        # print(metric_ap_dist)
+        # metric_inside_r_10 = fraction_inside_radius(
+        #     self.box_c, np.asarray(self.ap), 10
+        # )
+        # metric_inside_r_100 = fraction_inside_radius(
+        #     self.box_c, np.asarray(self.ap), 100
+        # )
+        # metric_symmetry_x = symmetry(self.box_c, (self.width, self.height), "x_axis")
+        # metric_symmetry_y = symmetry(self.box_c, (self.width, self.height), "y_axis")
+        # metric_symmetry_d1 = symmetry(
+        #     self.box_c, (self.width, self.height), "diagonal1"
+        # )
+        # metric_symmetry_d2 = symmetry(  
+        #     self.box_c, (self.width, self.height), "diagonal2"
+        # )
 
         if (
             self.adapt_rate
