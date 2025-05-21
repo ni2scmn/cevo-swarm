@@ -83,7 +83,7 @@ class Simulator:
                 cfg.get("robot", "max_v"),
                 camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
                 control_network=FeedforwardNN(
-                    layers=[3, 5, 3],  # TODO: layer size variation
+                    layers=[4, 5, 3],  # TODO: layer size variation
                     weight_init_fun=lambda: random.uniform(-1, 1),
                     activation_fun=None,
                 ),

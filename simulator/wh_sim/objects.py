@@ -245,6 +245,10 @@ class Swarm:
         rob_min_dists = np.min(rob_box_dists, axis=1)
         rob_closest_boxes = np.argmin(rob_box_dists, 1)
 
+        rob_ap_dists = cdist(warehouse.box_c[robots], warehouse.ap)
+        rob_ap_min_dists = np.min(rob_ap_dists, axis=1)
+        rob_closest_ap = np.argmin(rob_ap_dists, 1)
+
         pickup_mask = (
             (rob_min_dists < warehouse.box_range)
             & (warehouse.box_is_free[rob_closest_boxes] == 1)
@@ -255,15 +259,33 @@ class Swarm:
         rob_can_dropoff = np.array(robots)[dropoff_mask]
 
         for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
+
+            r_idx = np.where(robots == rob_id)[0][0]
+            
+            # robot carry state
+            # distance to box
+            # type of box
+            # distance to aggregation point
+            nn_input = np.array([
+                # robot carry state
+                self.agent_has_box[rob_id],
+                # distance to box
+                rob_min_dists[r_idx],
+                # type of box
+                warehouse.box_types[rob_closest_boxes[r_idx]],
+                # distance to aggregation point
+                rob_ap_min_dists[r_idx],
+            ])
+
             action = np.argmax(
-                warehouse.swarm.agents[rob_id][0].control_network.forward(np.random.rand(3) * 2 - 1)
+                warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input)
             )
 
             # choose action randomly between 0, 1, 2
             # action = np.random.randint(0, 2)
 
             if action == 0 and rob_id in rob_can_pickup:
-                box_id = rob_closest_boxes[np.where(robots == rob_id)[0][0]]
+                box_id = rob_closest_boxes[r_idx]
                 warehouse.swarm.set_agent_box_state(rob_id, 1)
                 warehouse.box_is_free[box_id] = 0  # change box state to 0 (not free, on a robot)
                 warehouse.box_c[box_id] = warehouse.rob_c[
@@ -273,13 +295,15 @@ class Swarm:
                     rob_id  # set the robot_carrier for box b to that robot ID
                 )
                 self.agent_box_id[rob_id] = box_id  # set box id
+                print("Picking up box %d" % box_id)
+
             elif action == 1 and rob_id in rob_can_dropoff:
                 box_id = self.agent_box_id[rob_id]
                 box_d = cdist([warehouse.box_c[box_id]], warehouse.box_c)
                 count = len(np.argwhere(box_d < 10).flatten())
                 if count >= 3:
                     continue
-                # print("Dropping off box %d" % box_id)
+                print("Dropping off box %d" % box_id)
                 warehouse.box_is_free[box_id] = 1  # mark box as free again
                 self.agent_has_box[rob_id] = 0  # mark robot as not carrying a box
                 self.agent_box_id[rob_id] = -1  # set box id
