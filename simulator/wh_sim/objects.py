@@ -4,14 +4,19 @@ from scipy.spatial.distance import cdist
 import random
 from collections import deque
 
+from simulator.wh_sim.nn import FeedforwardNN
+
 
 class Robot:
     # max_v: max speed, assume robot moves at max speed if healthy
     # camera_sensor: assume camera range is 360deg (may be multiple cameras)
-    def __init__(self, radius, max_v, camera_sensor_range, lifter_state=1):
+    def __init__(
+        self, radius, max_v, camera_sensor_range, control_network: FeedforwardNN, lifter_state=1
+    ):
         self.radius = radius
         self.max_v = max_v
         self.camera_sensor_range = camera_sensor_range
+        self.control_network = control_network
         self.lifter_state = lifter_state
 
 
@@ -52,7 +57,7 @@ class Swarm:
         self.number_of_agents = total_agents
         # TODO combine agent_has_box and agent_box_id
         self.agent_has_box = np.zeros(self.number_of_agents)  # agents start with no box
-        self.agent_box_id = np.zeros(self.number_of_agents) * (
+        self.agent_box_id = np.zeros(self.number_of_agents, dtype=np.int64) * (
             -1
         )  # record of box id that agent is carrying
         self.heading = 0.0314 * np.random.randint(
@@ -234,6 +239,50 @@ class Swarm:
         p_[amp_min] *= self.F_min
 
         return np.minimum(p_, np.ones(len(p)))
+
+    def nn_pickup_dropoff(self, warehouse, robots):
+        rob_box_dists = cdist(warehouse.rob_c[robots], warehouse.box_c)
+        rob_min_dists = np.min(rob_box_dists, axis=1)
+        rob_closest_boxes = np.argmin(rob_box_dists, 1)
+
+        pickup_mask = (
+            (rob_min_dists < warehouse.box_range)
+            & (warehouse.box_is_free[rob_closest_boxes] == 1)
+            & (self.agent_has_box[robots] == 0)
+        )
+        dropoff_mask = self.agent_has_box[robots] == 1
+        rob_can_pickup = np.array(robots)[pickup_mask]
+        rob_can_dropoff = np.array(robots)[dropoff_mask]
+
+        for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
+            action = np.argmax(
+                warehouse.swarm.agents[rob_id][0].control_network.forward(np.random.rand(3) * 2 - 1)
+            )
+
+            # choose action randomly between 0, 1, 2
+            # action = np.random.randint(0, 2)
+
+            if action == 0 and rob_id in rob_can_pickup:
+                box_id = rob_closest_boxes[np.where(robots == rob_id)[0][0]]
+                warehouse.swarm.set_agent_box_state(rob_id, 1)
+                warehouse.box_is_free[box_id] = 0  # change box state to 0 (not free, on a robot)
+                warehouse.box_c[box_id] = warehouse.rob_c[
+                    rob_id
+                ]  # change the box centre so it is aligned with its robot carrier's centre
+                warehouse.robot_carrier[box_id] = (
+                    rob_id  # set the robot_carrier for box b to that robot ID
+                )
+                self.agent_box_id[rob_id] = box_id  # set box id
+            elif action == 1 and rob_id in rob_can_dropoff:
+                box_id = self.agent_box_id[rob_id]
+                box_d = cdist([warehouse.box_c[box_id]], warehouse.box_c)
+                count = len(np.argwhere(box_d < 10).flatten())
+                if count >= 3:
+                    continue
+                # print("Dropping off box %d" % box_id)
+                warehouse.box_is_free[box_id] = 1  # mark box as free again
+                self.agent_has_box[rob_id] = 0  # mark robot as not carrying a box
+                self.agent_box_id[rob_id] = -1  # set box id
 
     def pickup_box(self, warehouse, robots=None):
         if robots is None:
@@ -555,4 +604,4 @@ class Swarm:
         amp_f = 1 + np.log(abs(old_bt - new_bt) / self.mem_size + 1) / 2
 
         self.novelty_env = np.minimum(np.ones(self.number_of_agents), amp_f * nov / 20)
-        print(self.novelty_env, "\n")
+        # print(self.novelty_env, "\n")

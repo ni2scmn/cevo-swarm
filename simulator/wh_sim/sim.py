@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+from tkinter import N
 
 dir_root = Path(__file__).resolve().parents[1]
 
@@ -14,6 +15,8 @@ import time
 import json
 
 from . import Swarm, CA, Warehouse, Robot
+
+from .nn import FeedforwardNN
 
 
 class Simulator:
@@ -39,7 +42,7 @@ class Simulator:
         except Exception as e:
             raise e
 
-        print(self.cfg.get("phase_change_rate"))
+        # print(self.cfg.get("phase_change_rate"))
         # CA evo
         self.warehouse = CA(
             self.cfg.get("warehouse", "width"),
@@ -72,6 +75,11 @@ class Simulator:
             cfg.get("robot", "radius"),
             cfg.get("robot", "max_v"),
             camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
+            control_network=FeedforwardNN(
+                layers=[3, 5, 3],  # TODO: layer size variation
+                weight_init_fun=lambda: random.uniform(-1, 1),
+                activation_fun=None,
+            ),
         )
 
         swarm = Swarm(
@@ -80,7 +88,9 @@ class Simulator:
             heading_change_rate=cfg.get("heading_change_rate"),
         )
 
-        swarm.add_agents(robot_obj, cfg.get("warehouse", "number_of_agents"))
+        for _ in range(cfg.get("warehouse", "number_of_agents")):
+            swarm.add_agents(robot_obj, 1)
+
         swarm.generate()
         swarm.init_params(cfg)
         return swarm

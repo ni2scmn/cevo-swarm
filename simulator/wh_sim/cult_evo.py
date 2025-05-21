@@ -80,23 +80,26 @@ class CA(Warehouse):
 
     # TODO avoid repetition from warehouse class
     def execute_pickup_dropoff(self, robots):
-        self.swarm.pickup_box(self, robots)
-        drop = self.swarm.dropoff_box(self, robots)
+        self.swarm.nn_pickup_dropoff(self, robots)
 
-        if len(drop):
-            # rob_n = self.robot_carrier[drop] # robot IDs to drop boxes
-            valid_drop = []
-            rob_n = []
-            for d in drop:
-                box_d = cdist([self.box_c[d]], self.box_c).flatten()
-                count = len(np.argwhere(box_d < 10).flatten())
-                if count < 3:
-                    valid_drop.append(d)
-                    rob_n.append(self.robot_carrier[d])
+        # self.swarm.pickup_box(self, robots)
+        # drop = self.swarm.dropoff_box(self, robots)
+        # drop = []
 
-            self.box_is_free[valid_drop] = 1  # mark boxes as free again
-            self.swarm.agent_has_box[rob_n] = 0  # mark robots as free again
-            self.swarm.agent_box_id[rob_n] = -1
+        # if len(drop):
+        #     # rob_n = self.robot_carrier[drop] # robot IDs to drop boxes
+        #     valid_drop = []
+        #     rob_n = []
+        #     for d in drop:
+        #         box_d = cdist([self.box_c[d]], self.box_c).flatten()
+        #         count = len(np.argwhere(box_d < 10).flatten())
+        #         if count < 3:
+        #             valid_drop.append(d)
+        #             rob_n.append(self.robot_carrier[d])
+
+        #     self.box_is_free[valid_drop] = 1  # mark boxes as free again
+        #     self.swarm.agent_has_box[rob_n] = 0  # mark robots as free again
+        #     self.swarm.agent_box_id[rob_n] = -1
 
     # TODO avoid repetition from warehouse class (post hook)
     def iterate(self, heading_bias=False, box_attraction=False):
