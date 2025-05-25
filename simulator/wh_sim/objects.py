@@ -275,6 +275,16 @@ class Swarm:
             type_of_next_box = warehouse.box_types[rob_closest_boxes[r_idx]]
             distance_to_next_ap = rob_ap_min_dists[r_idx]
 
+            # calculate the heading from the robot to the closest box and aggregation point
+            heading_to_next_box = np.arctan2(
+                warehouse.box_c[rob_closest_boxes[r_idx]][1] - warehouse.rob_c[rob_id][1],
+                warehouse.box_c[rob_closest_boxes[r_idx]][0] - warehouse.rob_c[rob_id][0],
+            )
+            heading_to_next_ap = np.arctan2(
+                warehouse.ap[rob_closest_ap[r_idx]][1] - warehouse.rob_c[rob_id][1],
+                warehouse.ap[rob_closest_ap[r_idx]][0] - warehouse.rob_c[rob_id][0],
+            )
+
             # one-hot encoding of the closest aggregation point and type of box
             next_ap_encoding = np.zeros(self.no_ap)
             next_box_encoding = np.zeros(self.no_box_t)
@@ -283,17 +293,27 @@ class Swarm:
             # if too far away, cap to camera range and do not encode type
             if distance_to_next_ap > camera_range:
                 distance_to_next_ap = camera_range
+                heading_to_next_ap_sin, heading_to_next_ap_cos = 0, 0
             else:
                 next_ap_encoding[rob_closest_ap[r_idx]] = (
                     1  # one-hot encoding of the closest aggregation point
+                )
+                heading_to_next_ap_sin, heading_to_next_ap_cos = (
+                    np.sin(heading_to_next_ap),
+                    np.cos(heading_to_next_ap),
                 )
 
             # apply camera range limit
             # if too far away, cap to camera range and do not encode type
             if distance_to_next_box > camera_range:
                 distance_to_next_box = camera_range
+                heading_to_next_box_sin, heading_to_next_box_cos = 0, 0
             else:
                 next_box_encoding[type_of_next_box] = 1  # one-hot encoding of the type of box
+                heading_to_next_box_sin, heading_to_next_box_cos = (
+                    np.sin(heading_to_next_box),
+                    np.cos(heading_to_next_box),
+                )
 
             # robot carry state
             # distance to box
@@ -303,8 +323,12 @@ class Swarm:
                 [
                     robot_carry_state,
                     distance_to_next_box,
+                    heading_to_next_box_sin,
+                    heading_to_next_box_cos,
                     *next_box_encoding,
                     distance_to_next_ap,
+                    heading_to_next_ap_sin,
+                    heading_to_next_ap_cos,
                     # one-hot encoding of the closest aggregation point
                     *next_ap_encoding,
                 ]
