@@ -15,7 +15,7 @@ import json
 
 from . import Swarm, CA, Warehouse, Robot
 
-from .nn import FeedforwardNN, random_weight_init, sigmoid, softmax
+from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softmax
 
 
 class Simulator:
@@ -94,15 +94,20 @@ class Simulator:
                 raise ValueError("Unknown activation function")
 
         for _ in range(cfg.get("warehouse", "number_of_agents")):
+            control_network = FeedforwardNN(
+                layers=nn_layers,
+                weight_init_fun=weight_init_fun,
+                activation_fun=activation_funcs,
+            )
+            belief_space = NNBeliefSpace(
+                bs_nn_weights=np.random.uniform(-1, 1, size=control_network.get_weights().shape)
+            )
             robot_obj = Robot(
                 cfg.get("robot", "radius"),
                 cfg.get("robot", "max_v"),
                 camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
-                control_network=FeedforwardNN(
-                    layers=nn_layers,
-                    weight_init_fun=weight_init_fun,
-                    activation_fun=activation_funcs,
-                ),
+                control_network=control_network,
+                belief_space=belief_space,
             )
             swarm.add_agents(robot_obj, 1)
 

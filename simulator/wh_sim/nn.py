@@ -97,6 +97,17 @@ class FeedforwardNN:
             idx += num_weights + num_biases
 
 
+class NNBeliefSpace:
+    def __init__(self, bs_nn_weights: NDArray[np.float64]):
+        self.bs_nn_weights: NDArray[np.float64] = bs_nn_weights
+
+    def get_weights(self) -> NDArray[np.float64]:
+        return self.bs_nn_weights
+
+    def set_weights(self, weights: NDArray[np.float64]) -> None:
+        self.bs_nn_weights = weights
+
+
 # Activation functions
 ########################################
 

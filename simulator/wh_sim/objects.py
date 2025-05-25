@@ -4,19 +4,26 @@ from scipy.spatial.distance import cdist
 import random
 from collections import deque
 
-from simulator.wh_sim.nn import FeedforwardNN
+from simulator.wh_sim.nn import FeedforwardNN, NNBeliefSpace
 
 
 class Robot:
     # max_v: max speed, assume robot moves at max speed if healthy
     # camera_sensor: assume camera range is 360deg (may be multiple cameras)
     def __init__(
-        self, radius, max_v, camera_sensor_range, control_network: FeedforwardNN, lifter_state=1
+        self,
+        radius,
+        max_v,
+        camera_sensor_range,
+        control_network: FeedforwardNN,
+        belief_space: NNBeliefSpace,
+        lifter_state=1,
     ):
         self.radius = radius
         self.max_v = max_v
         self.camera_sensor_range = camera_sensor_range
         self.control_network = control_network
+        self.belief_space = belief_space
         self.lifter_state = lifter_state
 
 
