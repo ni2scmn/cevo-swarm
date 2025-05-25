@@ -224,7 +224,6 @@ class CA(Warehouse):
                 )
                 self.swarm.agents[influencer][0].belief_space.set_weights(influencer_params)
 
- 
     # TODO asynchronous evo ?
     # This is called after the main step function (step forward in swarm behaviour)
     def update(self, agent_ids):
