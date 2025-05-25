@@ -268,10 +268,32 @@ class Swarm:
         for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
             r_idx = np.where(robots == rob_id)[0][0]
 
+            camera_range = self.camera_sensor_range_V[r_idx]
+
+            robot_carry_state = self.agent_has_box[rob_id]
+            distance_to_next_box = rob_min_dists[r_idx]
+            type_of_next_box = warehouse.box_types[rob_closest_boxes[r_idx]]
+            distance_to_next_ap = rob_ap_min_dists[r_idx]
+
+            # one-hot encoding of the closest aggregation point and type of box
             next_ap_encoding = np.zeros(self.no_ap)
-            next_ap_encoding[rob_closest_ap[r_idx]] = (
-                1  # one-hot encoding of the closest aggregation point
-            )
+            next_box_encoding = np.zeros(self.no_box_t)
+
+            # apply camera range limit
+            # if too far away, cap to camera range and do not encode type
+            if distance_to_next_ap > camera_range:
+                distance_to_next_ap = camera_range
+            else:
+                next_ap_encoding[rob_closest_ap[r_idx]] = (
+                    1  # one-hot encoding of the closest aggregation point
+                )
+
+            # apply camera range limit
+            # if too far away, cap to camera range and do not encode type
+            if distance_to_next_box > camera_range:
+                distance_to_next_box = camera_range
+            else:
+                next_box_encoding[type_of_next_box] = 1  # one-hot encoding of the type of box
 
             # robot carry state
             # distance to box
@@ -279,14 +301,10 @@ class Swarm:
             # distance to aggregation point
             nn_input = np.array(
                 [
-                    # robot carry state
-                    self.agent_has_box[rob_id],
-                    # distance to box
-                    rob_min_dists[r_idx],
-                    # type of box
-                    warehouse.box_types[rob_closest_boxes[r_idx]],
-                    # distance to aggregation point
-                    rob_ap_min_dists[r_idx],
+                    robot_carry_state,
+                    distance_to_next_box,
+                    *next_box_encoding,
+                    distance_to_next_ap,
                     # one-hot encoding of the closest aggregation point
                     *next_ap_encoding,
                 ]
