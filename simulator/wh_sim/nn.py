@@ -95,3 +95,51 @@ class FeedforwardNN:
             self.weights[i] = W
             self.biases[i] = b
             idx += num_weights + num_biases
+
+
+class NNBeliefSpace:
+    def __init__(self, bs_nn_weights: NDArray[np.float64]):
+        self.bs_nn_weights: NDArray[np.float64] = bs_nn_weights
+
+    def get_weights(self) -> NDArray[np.float64]:
+        return self.bs_nn_weights
+
+    def set_weights(self, weights: NDArray[np.float64]) -> None:
+        self.bs_nn_weights = weights
+
+
+# Activation functions
+########################################
+
+
+def sigmoid(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    return 1 / (1 + np.exp(-x))
+
+
+def tanh(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    return np.tanh(x)
+
+
+def relu(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    return np.maximum(0, x)
+
+
+def leaky_relu(x: NDArray[np.float64], alpha: float = 0.01) -> NDArray[np.float64]:
+    return np.where(x > 0, x, alpha * x)
+
+
+def softmax(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
+
+
+# Weight initialization functions
+########################################
+
+
+def random_weight_init() -> float:
+    return random.uniform(-1, 1)  # Random weight initialization in range [-1, 1]
+
+
+def zero_weight_init() -> float:
+    return 0.0  # Zero weight initialization

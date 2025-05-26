@@ -4,14 +4,26 @@ from scipy.spatial.distance import cdist
 import random
 from collections import deque
 
+from simulator.wh_sim.nn import FeedforwardNN, NNBeliefSpace
+
 
 class Robot:
     # max_v: max speed, assume robot moves at max speed if healthy
     # camera_sensor: assume camera range is 360deg (may be multiple cameras)
-    def __init__(self, radius, max_v, camera_sensor_range, lifter_state=1):
+    def __init__(
+        self,
+        radius,
+        max_v,
+        camera_sensor_range,
+        control_network: FeedforwardNN,
+        belief_space: NNBeliefSpace,
+        lifter_state=1,
+    ):
         self.radius = radius
         self.max_v = max_v
         self.camera_sensor_range = camera_sensor_range
+        self.control_network = control_network
+        self.belief_space = belief_space
         self.lifter_state = lifter_state
 
 
@@ -52,7 +64,7 @@ class Swarm:
         self.number_of_agents = total_agents
         # TODO combine agent_has_box and agent_box_id
         self.agent_has_box = np.zeros(self.number_of_agents)  # agents start with no box
-        self.agent_box_id = np.zeros(self.number_of_agents) * (
+        self.agent_box_id = np.zeros(self.number_of_agents, dtype=np.int64) * (
             -1
         )  # record of box id that agent is carrying
         self.heading = 0.0314 * np.random.randint(
@@ -234,6 +246,121 @@ class Swarm:
         p_[amp_min] *= self.F_min
 
         return np.minimum(p_, np.ones(len(p)))
+
+    def nn_pickup_dropoff(self, warehouse, robots):
+        rob_box_dists = cdist(warehouse.rob_c[robots], warehouse.box_c)
+        rob_min_dists = np.min(rob_box_dists, axis=1)
+        rob_closest_boxes = np.argmin(rob_box_dists, 1)
+
+        rob_ap_dists = cdist(warehouse.rob_c[robots], warehouse.ap)
+        rob_ap_min_dists = np.min(rob_ap_dists, axis=1)
+        rob_closest_ap = np.argmin(rob_ap_dists, 1)
+
+        pickup_mask = (
+            (rob_min_dists < warehouse.box_range)
+            & (warehouse.box_is_free[rob_closest_boxes] == 1)
+            & (self.agent_has_box[robots] == 0)
+        )
+        dropoff_mask = self.agent_has_box[robots] == 1
+        rob_can_pickup = np.array(robots)[pickup_mask]
+        rob_can_dropoff = np.array(robots)[dropoff_mask]
+
+        for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
+            r_idx = np.where(robots == rob_id)[0][0]
+
+            camera_range = self.camera_sensor_range_V[r_idx]
+
+            robot_carry_state = self.agent_has_box[rob_id]
+            distance_to_next_box = rob_min_dists[r_idx]
+            type_of_next_box = warehouse.box_types[rob_closest_boxes[r_idx]]
+            distance_to_next_ap = rob_ap_min_dists[r_idx]
+
+            # calculate the heading from the robot to the closest box and aggregation point
+            heading_to_next_box = np.arctan2(
+                warehouse.box_c[rob_closest_boxes[r_idx]][1] - warehouse.rob_c[rob_id][1],
+                warehouse.box_c[rob_closest_boxes[r_idx]][0] - warehouse.rob_c[rob_id][0],
+            )
+            heading_to_next_ap = np.arctan2(
+                warehouse.ap[rob_closest_ap[r_idx]][1] - warehouse.rob_c[rob_id][1],
+                warehouse.ap[rob_closest_ap[r_idx]][0] - warehouse.rob_c[rob_id][0],
+            )
+
+            # one-hot encoding of the closest aggregation point and type of box
+            next_ap_encoding = np.zeros(self.no_ap)
+            next_box_encoding = np.zeros(self.no_box_t)
+
+            # apply camera range limit
+            # if too far away, cap to camera range and do not encode type
+            if distance_to_next_ap > camera_range:
+                distance_to_next_ap = camera_range
+                heading_to_next_ap_sin, heading_to_next_ap_cos = 0, 0
+            else:
+                next_ap_encoding[rob_closest_ap[r_idx]] = (
+                    1  # one-hot encoding of the closest aggregation point
+                )
+                heading_to_next_ap_sin, heading_to_next_ap_cos = (
+                    np.sin(heading_to_next_ap),
+                    np.cos(heading_to_next_ap),
+                )
+
+            # apply camera range limit
+            # if too far away, cap to camera range and do not encode type
+            if distance_to_next_box > camera_range:
+                distance_to_next_box = camera_range
+                heading_to_next_box_sin, heading_to_next_box_cos = 0, 0
+            else:
+                next_box_encoding[type_of_next_box] = 1  # one-hot encoding of the type of box
+                heading_to_next_box_sin, heading_to_next_box_cos = (
+                    np.sin(heading_to_next_box),
+                    np.cos(heading_to_next_box),
+                )
+
+            # robot carry state
+            # distance to box
+            # type of box
+            # distance to aggregation point
+            nn_input = np.array(
+                [
+                    robot_carry_state,
+                    distance_to_next_box,
+                    heading_to_next_box_sin,
+                    heading_to_next_box_cos,
+                    *next_box_encoding,
+                    distance_to_next_ap,
+                    heading_to_next_ap_sin,
+                    heading_to_next_ap_cos,
+                    # one-hot encoding of the closest aggregation point
+                    *next_ap_encoding,
+                ]
+            )
+            action = np.argmax(warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input))
+
+            # choose action randomly between 0, 1, 2
+            # action = np.random.randint(0, 2)
+
+            if action == 0 and rob_id in rob_can_pickup:
+                box_id = rob_closest_boxes[r_idx]
+                warehouse.swarm.set_agent_box_state(rob_id, 1)
+                warehouse.box_is_free[box_id] = 0  # change box state to 0 (not free, on a robot)
+                warehouse.box_c[box_id] = warehouse.rob_c[
+                    rob_id
+                ]  # change the box centre so it is aligned with its robot carrier's centre
+                warehouse.robot_carrier[box_id] = (
+                    rob_id  # set the robot_carrier for box b to that robot ID
+                )
+                self.agent_box_id[rob_id] = box_id  # set box id
+                print("Picking up box %d" % box_id)
+
+            elif action == 1 and rob_id in rob_can_dropoff:
+                box_id = self.agent_box_id[rob_id]
+                box_d = cdist([warehouse.box_c[box_id]], warehouse.box_c)
+                count = len(np.argwhere(box_d < 10).flatten())
+                if count >= 3:
+                    continue
+                print("Dropping off box %d" % box_id)
+                warehouse.box_is_free[box_id] = 1  # mark box as free again
+                self.agent_has_box[rob_id] = 0  # mark robot as not carrying a box
+                self.agent_box_id[rob_id] = -1  # set box id
 
     def pickup_box(self, warehouse, robots=None):
         if robots is None:
@@ -555,4 +682,4 @@ class Swarm:
         amp_f = 1 + np.log(abs(old_bt - new_bt) / self.mem_size + 1) / 2
 
         self.novelty_env = np.minimum(np.ones(self.number_of_agents), amp_f * nov / 20)
-        print(self.novelty_env, "\n")
+        # print(self.novelty_env, "\n")

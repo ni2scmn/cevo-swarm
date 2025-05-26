@@ -15,6 +15,8 @@ import json
 
 from . import Swarm, CA, Warehouse, Robot
 
+from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softmax
+
 
 class Simulator:
     def __init__(
@@ -39,7 +41,7 @@ class Simulator:
         except Exception as e:
             raise e
 
-        print(self.cfg.get("phase_change_rate"))
+        # print(self.cfg.get("phase_change_rate"))
         # CA evo
         self.warehouse = CA(
             self.cfg.get("warehouse", "width"),
@@ -68,19 +70,47 @@ class Simulator:
         self.export_ts = list(range(steps, self.cfg.get("time_limit") + 1, steps))
 
     def build_swarm(self, cfg):
-        robot_obj = Robot(
-            cfg.get("robot", "radius"),
-            cfg.get("robot", "max_v"),
-            camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
-        )
-
         swarm = Swarm(
             repulsion_o=cfg.get("warehouse", "repulsion_object"),
             repulsion_w=cfg.get("warehouse", "repulsion_wall"),
             heading_change_rate=cfg.get("heading_change_rate"),
         )
 
-        swarm.add_agents(robot_obj, cfg.get("warehouse", "number_of_agents"))
+        nn_layers = cfg.get("robot", "nn_layers")
+        weight_init = cfg.get("robot", "weight_init")
+        if weight_init == "random":
+            weight_init_fun = random_weight_init
+        else:
+            raise ValueError("Unknown weight init function")
+        activation = cfg.get("robot", "activation_funcs")
+        activation_funcs = []
+
+        for af in activation:
+            if af == "sigmoid":
+                activation_funcs.append(sigmoid)
+            elif af == "softmax":
+                activation_funcs.append(softmax)
+            else:
+                raise ValueError("Unknown activation function")
+
+        for _ in range(cfg.get("warehouse", "number_of_agents")):
+            control_network = FeedforwardNN(
+                layers=nn_layers,
+                weight_init_fun=weight_init_fun,
+                activation_fun=activation_funcs,
+            )
+            belief_space = NNBeliefSpace(
+                bs_nn_weights=np.random.uniform(-1, 1, size=control_network.get_weights().shape)
+            )
+            robot_obj = Robot(
+                cfg.get("robot", "radius"),
+                cfg.get("robot", "max_v"),
+                camera_sensor_range=cfg.get("robot", "camera_sensor_range"),
+                control_network=control_network,
+                belief_space=belief_space,
+            )
+            swarm.add_agents(robot_obj, 1)
+
         swarm.generate()
         swarm.init_params(cfg)
         return swarm
