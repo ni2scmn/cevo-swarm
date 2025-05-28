@@ -9,7 +9,7 @@ class FeedforwardNN:
     def __init__(
         self,
         layers: list[int],
-        weight_init_fun: Callable[[], float],
+        weight_init: Callable[[], float] | NDArray[np.float64],
         activation_fun: Callable[[NDArray[np.float64]], NDArray[np.float64]]
         | list[Callable[[NDArray[np.float64]], NDArray[np.float64]]]
         | None = None,
@@ -35,18 +35,29 @@ class FeedforwardNN:
         else:
             self.activation_fun = [activation_fun] * (len(layers) - 1)
 
-        for i in range(len(layers) - 1):
-            # weight matrix for layer i to layer i+1
-            # shape: (layers[i+1], layers[i])
-            # bias vector for layer i+1
-            # shape: (layers[i+1],)
-            weight_matrix = np.array(
-                [[weight_init_fun() for _ in range(layers[i])] for _ in range(layers[i + 1])]
-            )
-            bias_vector = np.array([weight_init_fun() for _ in range(layers[i + 1])])
+        # check if weight_init is a function
+        if callable(weight_init):
+            for i in range(len(layers) - 1):
+                # weight matrix for layer i to layer i+1
+                # shape: (layers[i+1], layers[i])
+                # bias vector for layer i+1
+                # shape: (layers[i+1],)
+                weight_matrix = np.array(
+                    [[weight_init() for _ in range(layers[i])] for _ in range(layers[i + 1])]
+                )
+                bias_vector = np.array([weight_init() for _ in range(layers[i + 1])])
 
-            self.weights.append(weight_matrix)
-            self.biases.append(bias_vector)
+                self.weights.append(weight_matrix)
+                self.biases.append(bias_vector)
+        else:
+            if len(weight_init) != self._determine_weight_len():
+                raise ValueError(
+                    f"Expected {self._determine_weight_len()} weights, got {len(weight_init)}"
+                )
+            for i in range(len(layers) - 1):
+                self.weights.append(np.array([]))
+                self.biases.append(np.array([]))
+            self.set_weights(weight_init)
 
     def forward(self, x: NDArray[np.float64]) -> NDArray[np.float64]:
         """
@@ -74,12 +85,13 @@ class FeedforwardNN:
             genes.append(b.flatten())
         return np.concatenate(genes)
 
-    # TOOO: add check for correct size
     def set_weights(self, weights: NDArray[np.float64]) -> None:
         """
         Set the weights of the neural network from a numpy array.
         weights: 1D numpy array containing the weights
         """
+        if len(weights) != self._determine_weight_len():
+            raise ValueError(f"Expected {self._determine_weight_len()} weights, got {len(weights)}")
         idx = 0
         for i in range(len(self.layers) - 1):
             # get the number of weights for layer i
@@ -95,6 +107,12 @@ class FeedforwardNN:
             self.weights[i] = W
             self.biases[i] = b
             idx += num_weights + num_biases
+
+    def _determine_weight_len(self) -> int:
+        total_weights = 0
+        for i in range(len(self.layers) - 1):
+            total_weights += (self.layers[i] + 1) * self.layers[i + 1]  # +1 for bias
+        return total_weights
 
 
 class NNBeliefSpace:
