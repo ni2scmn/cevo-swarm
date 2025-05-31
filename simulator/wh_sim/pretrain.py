@@ -31,7 +31,6 @@ class Pretrain:
         self.verbose = verbose
         self.exit_threads = False
 
-
         self.population_size = self.cfg.get("train", "population_size")
         self.n_generations = self.cfg.get("train", "n_generations")
         self.metric = self.cfg.get("train", "metric")
@@ -42,7 +41,6 @@ class Pretrain:
         self.init_swarm()
         self.init_warehouse()
         self.population = self.init_population()
-
 
     def init_warehouse(self):
         self.warehouse = CA(
@@ -85,7 +83,7 @@ class Pretrain:
                 activation_funcs.append(softmax)
             else:
                 raise ValueError("Unknown activation function")
-            
+
         control_network = FeedforwardNN(
             layers=nn_layers,
             weight_init=weight_init_fun,
@@ -106,7 +104,7 @@ class Pretrain:
 
         self.swarm.generate()
         self.swarm.init_params(self.cfg)
-            
+
     def init_population(self):
         population = []
         for _ in range(self.population_size):
@@ -115,23 +113,23 @@ class Pretrain:
             )
             population.append((nn_weights, -1))  # (weights, fitness)
         return population
-    
+
     def eval_generation(self):
         for i in range(self.population_size):
             entity = self.population[i]
             fitness = self.eval_entity(entity)
             print(f"\tEntity {i + 1} fitness: {fitness}")
             self.population[i] = (entity[0], fitness)  # Update fitness
-    
+
     def eval_entity(self, entity):
         for i in range(self.cfg.get("warehouse", "number_of_agents")):
             self.swarm.agents[i][0].control_network.set_weights(entity[0])
-        
+
         self.init_warehouse()
 
         self.run_episode()
         return self.get_fitness()
-    
+
     def run_episode(self):
         while self.warehouse.counter <= self.cfg.get("time_limit"):
             self.iterate()
@@ -150,7 +148,7 @@ class Pretrain:
             self.warehouse.box_c,
             np.asarray(self.warehouse.ap),
         )
-    
+
     def run(self):
         for generation in range(self.n_generations):
             print(f"Generation {generation + 1}/{self.n_generations}")
@@ -161,26 +159,26 @@ class Pretrain:
     def evolve_population(self):
         new_population = []
         sorted_population = sorted(self.population, key=lambda x: x.fitness, reverse=True)
-        
+
         # Elitism: keep the best individuals
         if self.elitism:
-            new_population.extend(sorted_population[:self.elitism])
-        
+            new_population.extend(sorted_population[: self.elitism])
+
         while len(new_population) < self.population_size:
             parent1 = self.select_parent(sorted_population)
             parent2 = self.select_parent(sorted_population)
             child = self.crossover(parent1, parent2)
             child = self.mutate(child)
             new_population.append(child)
-        
+
         return new_population
-    
+
     def select_parent(self, population):
         # Select a parent based on fitness (roulette wheel selection)
         total_fitness = sum(entity.fitness for entity in population)
         selection_probs = [entity.fitness / total_fitness for entity in population]
         return np.random.choice(population, p=selection_probs)
-    
+
     def crossover(self, parent1, parent2):
         # Simple crossover: average weights of parents
         child_weights = (parent1.get_weights() + parent2.get_weights()) / 2
@@ -191,7 +189,7 @@ class Pretrain:
         )
         child.set_weights(child_weights)
         return child
-    
+
     def mutate(self, entity):
         # Simple mutation: add small random noise to weights
         if np.random.rand() < self.mutation_rate:

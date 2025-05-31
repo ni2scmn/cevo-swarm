@@ -57,7 +57,6 @@ class Pretrain:
         self.export_data = self.cfg.get("export_data")
         self.export_steps = self.cfg.get("export_steps")
 
-
         self.population_size = self.cfg.get("train", "population_size")
         self.n_generations = self.cfg.get("train", "n_generations")
         self.metric = self.cfg.get("train", "metric")
@@ -70,12 +69,10 @@ class Pretrain:
 
         # self._init_log()
 
-
     def run(self):
         if self.verbose:
             print("Running with seed: %d" % self.random_seed)
-    
-        
+
         # Run the simulation
         self.run_episode()
 
@@ -111,9 +108,6 @@ class Pretrain:
             )
             population.append(control_network)
         return population
-    
-    def set_population(self):
-        for i in range
 
     def init_swarm(self, cfg):
         swarm = Swarm(
@@ -170,7 +164,6 @@ class Pretrain:
         swarm.init_params(cfg)
         return swarm
 
-
     def iterate(self):
         self.warehouse.iterate(self.cfg.get("heading_bias"), self.cfg.get("box_attraction"))
         counter = self.warehouse.counter
@@ -183,9 +176,6 @@ class Pretrain:
 
         self.exit_sim(counter)
 
-    def evaluate_fitness(self):
-        
-    
     def exit_sim(self, counter):
         if counter > self.cfg.get("time_limit"):
             print("Exiting...")
