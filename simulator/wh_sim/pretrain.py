@@ -1,6 +1,7 @@
 from copy import deepcopy
 from operator import ne
 from pathlib import Path
+import re
 import sys
 from tqdm import tqdm
 import concurrent.futures
@@ -33,10 +34,18 @@ def eval_entity(entity, warehouse, swarm, cfg):
     while warehouse.counter <= cfg.get("time_limit"):
         warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
 
-    return -distance_to_closest_ap(
-        warehouse.box_c,
-        np.asarray(warehouse.ap),
-    )
+    # check self.agent_box_pickup_count (array of box pickup counts per agent)
+    # if agent has picked up boxes, return the negative distance to the closest AP
+    if np.sum(warehouse.agent_box_pickup_count) > 0:
+        # Calculate the fitness as the negative distance to the closest AP
+        return -distance_to_closest_ap(
+            warehouse.box_c,
+            np.asarray(warehouse.ap),
+        )
+    # If no boxes were picked up, return a large negative value
+    else:
+        return -1e6
+
 
 
 class Pretrain:

@@ -53,6 +53,8 @@ class CA(Warehouse):
         self.continuous_traits = ["P_m", "D_m", "SC", "r0"]
         self.adapt_rate = adaptive_rate_tuning
 
+        self.agent_box_pickup_count = np.zeros(self.swarm.number_of_agents)
+
     # def update_hook(self):
     #
 
@@ -113,7 +115,9 @@ class CA(Warehouse):
             self.map,
             heading_bias,
             box_attraction,
-        )  # the robots move using the random walk function which generates a new deviation (rob_d)
+        )
+        # add to count if agent has box
+        self.agent_box_pickup_count = self.agent_box_pickup_count + self.swarm.agent_has_box
 
         # handles logic to move boxes with robots/drop boxes
         t = self.counter % 10
