@@ -1,9 +1,11 @@
-from multiprocessing import freeze_support
-from simulator.wh_sim import *
-from simulator.lib import Config, SaveTo
-from simulator import CFG_FILES
 import time
+from multiprocessing import freeze_support
+
 import numpy as np
+
+from simulator import CFG_FILES
+from simulator.lib import Config, SaveTo
+from simulator.wh_sim import *
 
 if __name__ == "__main__":
     freeze_support()

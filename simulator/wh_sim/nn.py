@@ -1,7 +1,7 @@
-import numpy as np
-from typing import Any, Callable
 import random
+from typing import Any, Callable
 
+import numpy as np
 from numpy.typing import NDArray
 
 

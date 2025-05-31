@@ -1,12 +1,9 @@
-import numpy as np
-
-from typing import Any, Callable
 import random
+from typing import Any, Callable
 
-from numpy.typing import NDArray
-
-
+import numpy as np
 from nn import FeedforwardNN
+from numpy.typing import NDArray
 
 
 def random_init() -> float:

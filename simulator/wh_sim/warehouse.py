@@ -1,7 +1,8 @@
-import numpy as np
-import random
 import math
-from scipy.spatial.distance import cdist, pdist, euclidean
+import random
+
+import numpy as np
+from scipy.spatial.distance import cdist, euclidean, pdist
 
 
 class Warehouse:

@@ -1,20 +1,20 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 dir_root = Path(__file__).resolve().parents[1]
 
-import numpy as np
-import pandas as pd
+import datetime
+import json
+import os
 import random
 import threading
-import os
-from os.path import dirname, realpath
-import datetime
 import time
-import json
+from os.path import dirname, realpath
 
-from . import Swarm, CA, Warehouse, Robot
+import numpy as np
+import pandas as pd
 
+from . import CA, Robot, Swarm, Warehouse
 from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softmax
 
 
