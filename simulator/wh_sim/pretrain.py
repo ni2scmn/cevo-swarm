@@ -2,6 +2,7 @@ from copy import deepcopy
 from operator import ne
 from pathlib import Path
 import sys
+from tqdm import tqdm
 import concurrent.futures
 from unittest import result
 from simulator.lib.metrics import distance_to_closest_ap
@@ -138,13 +139,13 @@ class Pretrain:
         args = []
         for i in range(self.population_size):
             entity = self.population[i]
-            warehouse = self.init_warehouse()  # Reset warehouse for each entity
+            warehouse = deepcopy(self.warehouse)  # Copy warehouse to avoid modifying the original
             swarm = deepcopy(self.swarm)  # Copy swarm to avoid modifying the original
             args.append((entity, warehouse, swarm, self.cfg))
 
         # Use multithreading to evaluate entities in parallel
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = list(executor.map(eval_entity, *zip(*args)))
+            results = list(tqdm(executor.map(eval_entity, *zip(*args)), total=len(args), desc="Evaluating entities"))
 
         for i, fitness in enumerate(results):
             print(f"\tEntity {i + 1} fitness: {fitness}")
