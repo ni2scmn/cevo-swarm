@@ -10,24 +10,24 @@ warehouse:
   box_radius: 5.0
   width: 500
   height: 500
-  number_of_agents: 2
-  number_of_boxes: 200
+  number_of_agents: 20
+  number_of_boxes: 100
   repulsion_wall: 25
   repulsion_object: 5
   object_position: 0
 
 train:
-  population_size: 20
+  population_size: 25
   n_generations: 100
   metric: TODO
   mutation_rate: 0.1
-  crossover_rate: 0.5
+  crossover_rate: 0.1
   elitism: 0.15
   
 
 faults: []
 
-time_limit: 3000
+time_limit: 4000
 animate: False
 save_animation: False
 export_data: True

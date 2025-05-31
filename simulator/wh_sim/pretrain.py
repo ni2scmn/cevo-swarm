@@ -195,8 +195,8 @@ class Pretrain:
             new_population.extend(sorted_population[:n_elite])
 
         while len(new_population) < self.population_size:
-            parent1 = self.select_parent(sorted_population)
-            parent2 = self.select_parent(sorted_population)
+            parent1 = self.select_parent_tournament(sorted_population, tournament_size=4)
+            parent2 = self.select_parent_tournament(sorted_population, tournament_size=4)
             if np.random.rand() < self.crossover_rate:
                 child1, child2 = one_point_crossover(parent1, parent2)
             else:
@@ -222,14 +222,8 @@ class Pretrain:
         idx = np.random.choice(len(population), p=selection_probs)
         return population[idx][0]
 
-    def crossover(self, parent1, parent2):
-        # Simple crossover: average weights of parents
-        child_weights = (parent1[0] + parent2[0]) / 2
-        return (child_weights, -1e6)
-
-    def mutate(self, entity):
-        # Simple mutation: add small random noise to weights
-        if np.random.rand() < self.mutation_rate:
-            noise = np.random.normal(0, 0.1, size=entity[0].shape)
-            entity = (entity[0] + noise, entity[1])  # Keep fitness unchanged
-        return entity
+    def select_parent_tournament(self, population, tournament_size=3):
+        # Select a parent using tournament selection
+        tournament = random.sample(population, tournament_size)
+        best_entity = max(tournament, key=lambda x: x[1])
+        return best_entity[0]
