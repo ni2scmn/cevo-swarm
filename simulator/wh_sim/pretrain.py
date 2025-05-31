@@ -87,11 +87,11 @@ class Pretrain:
             heading_change_rate=self.cfg.get("heading_change_rate"),
         )
 
-        nn_layers = self.cfg.get("robot", "nn_layers")
-        weight_init = self.cfg.get("robot", "weight_init")
+        nn_layers = self.cfg.get("nn_controller", "nn_layers")
+        weight_init = self.cfg.get("nn_controller", "weight_init")
         weight_init_fun = lambda: random.uniform(int(weight_init[0]), int(weight_init[1]))
 
-        activation = self.cfg.get("robot", "activation_funcs")
+        activation = self.cfg.get("nn_controller", "activation_funcs")
         activation_funcs = []
 
         for af in activation:
@@ -126,7 +126,7 @@ class Pretrain:
 
     def init_population(self):
         population = []
-        weight_init = self.cfg.get("robot", "weight_init")
+        weight_init = self.cfg.get("nn_controller", "weight_init")
         for _ in range(self.population_size):
             nn_weights = np.random.uniform(
                 int(weight_init[0]),

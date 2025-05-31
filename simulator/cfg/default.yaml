@@ -2,6 +2,8 @@ robot:
   radius: 12.5
   max_v: 2
   camera_sensor_range: 100
+
+nn_controller:
   nn_layers: [2, 2, 3]
   weight_init: [-100, 100]
   activation_funcs: [sigmoid, softmax]
