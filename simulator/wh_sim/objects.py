@@ -349,7 +349,7 @@ class Swarm:
                     rob_id  # set the robot_carrier for box b to that robot ID
                 )
                 self.agent_box_id[rob_id] = box_id  # set box id
-                print("Picking up box %d" % box_id)
+                #print("Picking up box %d" % box_id)
 
             elif action == 1 and rob_id in rob_can_dropoff:
                 box_id = self.agent_box_id[rob_id]
@@ -357,7 +357,7 @@ class Swarm:
                 count = len(np.argwhere(box_d < 10).flatten())
                 if count >= 3:
                     continue
-                print("Dropping off box %d" % box_id)
+                #print("Dropping off box %d" % box_id)
                 warehouse.box_is_free[box_id] = 1  # mark box as free again
                 self.agent_has_box[rob_id] = 0  # mark robot as not carrying a box
                 self.agent_box_id[rob_id] = -1  # set box id

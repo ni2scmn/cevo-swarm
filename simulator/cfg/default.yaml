@@ -16,6 +16,15 @@ warehouse:
   repulsion_object: 5
   object_position: 0
 
+train:
+  population_size: 100
+  n_generations: 1000
+  metric: TODO
+  mutation_rate: 0.1
+  crossover_rate: 0.5
+  elitism: 0.1
+  
+
 faults: []
 
 time_limit: 1000

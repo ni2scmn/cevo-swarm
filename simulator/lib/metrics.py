@@ -9,7 +9,6 @@ from numpy.typing import NDArray
 def distance_to_closest_ap(box_c: NDArray, ap_c: NDArray) -> float:
     dists = cdist(box_c, ap_c)
     min_dists = np.min(dists, axis=1)
-    print(f"Box shape: {box_c.shape}, AP shape: {ap_c.shape}")
     return np.sum(min_dists) / box_c.shape[0]  # Normalize by box count
 
 
