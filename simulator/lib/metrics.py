@@ -1,8 +1,9 @@
 import math
+from scipy.spatial.distance import cdist
 
 import numpy as np
+
 from numpy.typing import NDArray
-from scipy.spatial.distance import cdist
 
 
 def distance_to_closest_ap(box_c: NDArray, ap_c: NDArray) -> float:

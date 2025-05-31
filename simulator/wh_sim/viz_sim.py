@@ -1,13 +1,10 @@
-import os
-import sys
-import time
-from os.path import dirname, realpath
-
-import numpy as np
-from matplotlib import animation
-from matplotlib import pyplot as plt
-
 from . import Simulator
+from matplotlib import pyplot as plt, animation
+import time
+import numpy as np
+import sys
+from os.path import dirname, realpath
+import os
 
 
 class VizSim(Simulator):

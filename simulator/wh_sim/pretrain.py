@@ -1,29 +1,27 @@
-import concurrent.futures
-import sys
 from copy import deepcopy
 from operator import ne
 from pathlib import Path
-from unittest import result
-
+import sys
 from tqdm import tqdm
-
+import concurrent.futures
+from unittest import result
 from simulator.lib.metrics import distance_to_closest_ap
 from simulator.wh_sim.neuroevolution import one_point_crossover, point_mutate
 
 dir_root = Path(__file__).resolve().parents[1]
 
-import datetime
-import json
-import os
-import random
-import threading
-import time
-from os.path import dirname, realpath
-
 import numpy as np
 import pandas as pd
+import random
+import threading
+import os
+from os.path import dirname, realpath
+import datetime
+import time
+import json
 
-from . import CA, Robot, Swarm, Warehouse
+from . import Swarm, CA, Warehouse, Robot
+
 from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softmax
 
 

@@ -1,8 +1,8 @@
+from simulator.wh_sim import *
+from simulator.lib import Config
+from simulator import CFG_FILES, MODEL_ROOT, STATS_ROOT
 import time
 
-from simulator import CFG_FILES, MODEL_ROOT, STATS_ROOT
-from simulator.lib import Config
-from simulator.wh_sim import *
 
 ex_id = "e_1"
 iterations = 200

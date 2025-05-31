@@ -1,17 +1,16 @@
-import random
-import sys
-from itertools import combinations
 from pathlib import Path
-
+import sys
+import random
+from itertools import combinations
 from scipy.spatial.distance import cdist
 
 dir_root = Path(__file__).resolve().parents[1]
 
 import numpy as np
 
-from simulator.lib.metrics import distance_to_closest_ap, fraction_inside_radius, symmetry
-
 from . import Warehouse
+
+from simulator.lib.metrics import distance_to_closest_ap, fraction_inside_radius, symmetry
 
 
 # Implements swarm with cultural evolution

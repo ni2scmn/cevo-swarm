@@ -1,9 +1,8 @@
+import numpy as np
 import math
+from scipy.spatial.distance import cdist
 import random
 from collections import deque
-
-import numpy as np
-from scipy.spatial.distance import cdist
 
 from simulator.wh_sim.nn import FeedforwardNN, NNBeliefSpace
 
