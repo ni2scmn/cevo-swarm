@@ -6,9 +6,6 @@ import random
 from numpy.typing import NDArray
 
 
-from nn import FeedforwardNN
-
-
 def point_mutate(
     weights: NDArray[np.float64],
     mutation_rate: float,

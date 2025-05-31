@@ -1,9 +1,11 @@
 from copy import deepcopy
+from operator import ne
 from pathlib import Path
 import sys
 import concurrent.futures
 from unittest import result
 from simulator.lib.metrics import distance_to_closest_ap
+from simulator.wh_sim.neuroevolution import one_point_crossover, point_mutate
 
 dir_root = Path(__file__).resolve().parents[1]
 
@@ -187,9 +189,17 @@ class Pretrain:
         while len(new_population) < self.population_size:
             parent1 = self.select_parent(sorted_population)
             parent2 = self.select_parent(sorted_population)
-            child = self.crossover(parent1, parent2)
-            child = self.mutate(child)
-            new_population.append(child)
+            if np.random.rand() < self.crossover_rate:
+                child1, child2 = one_point_crossover(parent1, parent2)
+            else:
+                child1, child2 = parent1, parent2
+                
+            child1 = point_mutate(child1, self.mutation_rate, mutation=np.random.normal(0, 0.1, size=child1[0].shape))
+            child2 = point_mutate(child2, self.mutation_rate, mutation=np.random.normal(0, 0.1, size=child2[0].shape))
+            new_population.append((child1, -1e6))
+            new_population.append((child2, -1e6))
+        # Ensure the new population size matches the original
+        new_population = new_population[:self.population_size]
 
         return new_population
 
@@ -198,7 +208,7 @@ class Pretrain:
         total_fitness = sum(entity[1] for entity in population)
         selection_probs = [entity[1] / total_fitness for entity in population]
         idx = np.random.choice(len(population), p=selection_probs)
-        return population[idx]
+        return population[idx][0]
 
     def crossover(self, parent1, parent2):
         # Simple crossover: average weights of parents
