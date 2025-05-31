@@ -339,7 +339,7 @@ class Swarm:
                     # *next_ap_encoding,
                 ]
             )
-            #print(nn_input)
+            # print(nn_input)
             action = np.argmax(warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input))
 
             # choose action randomly between 0, 1, 2

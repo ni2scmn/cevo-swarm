@@ -77,7 +77,7 @@ class Simulator:
         )
 
         nn_layers = cfg.get("robot", "nn_layers")
-        weight_init = cfg.get("robot", "weight_init")        
+        weight_init = cfg.get("robot", "weight_init")
         weight_init_fun = lambda: random.uniform(int(weight_init[0]), int(weight_init[1]))
 
         activation = cfg.get("robot", "activation_funcs")

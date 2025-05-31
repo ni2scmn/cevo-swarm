@@ -88,7 +88,7 @@ class Pretrain:
         )
 
         nn_layers = self.cfg.get("robot", "nn_layers")
-        weight_init = self.cfg.get("robot", "weight_init")        
+        weight_init = self.cfg.get("robot", "weight_init")
         weight_init_fun = lambda: random.uniform(int(weight_init[0]), int(weight_init[1]))
 
         activation = self.cfg.get("robot", "activation_funcs")
@@ -126,11 +126,12 @@ class Pretrain:
 
     def init_population(self):
         population = []
-        weight_init = self.cfg.get("robot", "weight_init")        
+        weight_init = self.cfg.get("robot", "weight_init")
         for _ in range(self.population_size):
             nn_weights = np.random.uniform(
-                int(weight_init[0]), int(weight_init[1]),
-                size=self.swarm.agents[0][0].control_network.get_weights().shape
+                int(weight_init[0]),
+                int(weight_init[1]),
+                size=self.swarm.agents[0][0].control_network.get_weights().shape,
             )
             population.append((nn_weights, -1e6))  # (weights, fitness)
         return population
@@ -145,7 +146,13 @@ class Pretrain:
 
         # Use multithreading to evaluate entities in parallel
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = list(tqdm(executor.map(eval_entity, *zip(*args)), total=len(args), desc="Evaluating entities"))
+            results = list(
+                tqdm(
+                    executor.map(eval_entity, *zip(*args)),
+                    total=len(args),
+                    desc="Evaluating entities",
+                )
+            )
 
         for i, fitness in enumerate(results):
             print(f"\tEntity {i + 1} fitness: {fitness}")
@@ -194,13 +201,17 @@ class Pretrain:
                 child1, child2 = one_point_crossover(parent1, parent2)
             else:
                 child1, child2 = parent1, parent2
-                
-            child1 = point_mutate(child1, self.mutation_rate, mutation=np.random.normal(0, 5, size=child1[0].shape))
-            child2 = point_mutate(child2, self.mutation_rate, mutation=np.random.normal(0, 5, size=child2[0].shape))
+
+            child1 = point_mutate(
+                child1, self.mutation_rate, mutation=np.random.normal(0, 5, size=child1[0].shape)
+            )
+            child2 = point_mutate(
+                child2, self.mutation_rate, mutation=np.random.normal(0, 5, size=child2[0].shape)
+            )
             new_population.append((child1, -1e6))
             new_population.append((child2, -1e6))
         # Ensure the new population size matches the original
-        new_population = new_population[:self.population_size]
+        new_population = new_population[: self.population_size]
 
         return new_population
 
