@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 import sys
 
@@ -20,6 +21,15 @@ from . import Swarm, CA, Warehouse, Robot
 from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softmax
 
 
+def eval_entity(entity, warehouse, swarm, cfg):
+    while warehouse.counter <= cfg.get("time_limit"):
+        warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
+
+    return -distance_to_closest_ap(
+        warehouse.box_c,
+        np.asarray(warehouse.ap),
+    )
+
 class Pretrain:
     def __init__(
         self,
@@ -38,12 +48,12 @@ class Pretrain:
         self.crossover_rate = self.cfg.get("train", "crossover_rate")
         self.elitism = self.cfg.get("train", "elitism")
 
-        self.init_swarm()
-        self.init_warehouse()
+        self.swarm = self.init_swarm()
+        self.warehouse = self.init_warehouse()
         self.population = self.init_population()
 
     def init_warehouse(self):
-        self.warehouse = CA(
+        warehouse = CA(
             self.cfg.get("warehouse", "width"),
             self.cfg.get("warehouse", "height"),
             self.cfg.get("warehouse", "number_of_boxes"),
@@ -57,11 +67,13 @@ class Pretrain:
             self.cfg.get("adaptive_rate_tuning"),
         )
 
-        self.warehouse.generate_ap(self.cfg)
-        self.warehouse.verbose = self.verbose
+        warehouse.generate_ap(self.cfg)
+        warehouse.verbose = self.verbose
+        return warehouse
+
 
     def init_swarm(self):
-        self.swarm = Swarm(
+        swarm = Swarm(
             repulsion_o=self.cfg.get("warehouse", "repulsion_object"),
             repulsion_w=self.cfg.get("warehouse", "repulsion_wall"),
             heading_change_rate=self.cfg.get("heading_change_rate"),
@@ -100,10 +112,11 @@ class Pretrain:
             belief_space=belief_space,
         )
         for _ in range(self.cfg.get("warehouse", "number_of_agents")):
-            self.swarm.add_agents(robot_obj, 1)
+            swarm.add_agents(robot_obj, 1)
 
-        self.swarm.generate()
-        self.swarm.init_params(self.cfg)
+        swarm.generate()
+        swarm.init_params(self.cfg)
+        return swarm
 
     def init_population(self):
         population = []
@@ -117,18 +130,25 @@ class Pretrain:
     def eval_generation(self):
         for i in range(self.population_size):
             entity = self.population[i]
-            fitness = self.eval_entity(entity)
+            warehouse = self.init_warehouse()  # Reset warehouse for each entity
+            swarm = deepcopy(self.swarm)  # Copy swarm to avoid modifying the original
+            fitness = eval_entity(
+                entity,
+                warehouse,
+                swarm,
+                self.cfg,
+            )
             print(f"\tEntity {i + 1} fitness: {fitness}")
             self.population[i] = (entity[0], fitness)  # Update fitness
 
-    def eval_entity(self, entity):
-        for i in range(self.cfg.get("warehouse", "number_of_agents")):
-            self.swarm.agents[i][0].control_network.set_weights(entity[0])
+    # def eval_entity(self, entity):
+    #     for i in range(self.cfg.get("warehouse", "number_of_agents")):
+    #         self.swarm.agents[i][0].control_network.set_weights(entity[0])
 
-        self.init_warehouse()
+    #     self.init_warehouse()
 
-        self.run_episode()
-        return self.get_fitness()
+    #     self.run_episode()
+    #     return self.get_fitness()
 
     def run_episode(self):
         while self.warehouse.counter <= self.cfg.get("time_limit"):
