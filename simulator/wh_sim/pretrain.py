@@ -153,9 +153,9 @@ class Pretrain:
         for generation in range(self.n_generations):
             print(f"Generation {generation + 1}/{self.n_generations}")
             self.eval_generation()
-            self.population = self.evolve_population()
             print("Best fitness:", max([entity[1] for entity in self.population]))
             print("Average fitness:", np.mean([entity[1] for entity in self.population]))
+            self.population = self.evolve_population()
 
     def evolve_population(self):
         new_population = []
