@@ -265,6 +265,9 @@ class Swarm:
         rob_can_pickup = np.array(robots)[pickup_mask]
         rob_can_dropoff = np.array(robots)[dropoff_mask]
 
+        # scale distances by the maximum distance in the warehouse (diagonal length)
+        dist_scaling = math.sqrt(warehouse.width**2 + warehouse.height**2)
+
         for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
             r_idx = np.where(robots == rob_id)[0][0]
 
@@ -315,6 +318,9 @@ class Swarm:
                     np.cos(heading_to_next_box),
                 )
 
+            distance_to_next_ap = distance_to_next_ap / dist_scaling  # scale distance to next ap
+            distance_to_next_box = distance_to_next_box / dist_scaling  # scale distance to next box
+
             # robot carry state
             # distance to box
             # type of box
@@ -322,17 +328,18 @@ class Swarm:
             nn_input = np.array(
                 [
                     robot_carry_state,
-                    distance_to_next_box,
-                    heading_to_next_box_sin,
-                    heading_to_next_box_cos,
-                    *next_box_encoding,
+                    # distance_to_next_box,
+                    # heading_to_next_box_sin,
+                    # heading_to_next_box_cos,
+                    # *next_box_encoding,
                     distance_to_next_ap,
-                    heading_to_next_ap_sin,
-                    heading_to_next_ap_cos,
+                    # heading_to_next_ap_sin,
+                    # heading_to_next_ap_cos,
                     # one-hot encoding of the closest aggregation point
-                    *next_ap_encoding,
+                    # *next_ap_encoding,
                 ]
             )
+            #print(nn_input)
             action = np.argmax(warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input))
 
             # choose action randomly between 0, 1, 2
