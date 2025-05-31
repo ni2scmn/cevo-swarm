@@ -17,7 +17,7 @@ warehouse:
   object_position: 0
 
 train:
-  population_size: 30
+  population_size: 5
   n_generations: 100
   metric: TODO
   mutation_rate: 0.1

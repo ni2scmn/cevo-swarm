@@ -1,7 +1,8 @@
 from copy import deepcopy
 from pathlib import Path
 import sys
-
+import concurrent.futures
+from unittest import result
 from simulator.lib.metrics import distance_to_closest_ap
 
 dir_root = Path(__file__).resolve().parents[1]
@@ -22,6 +23,10 @@ from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softm
 
 
 def eval_entity(entity, warehouse, swarm, cfg):
+    for i in range(cfg.get("warehouse", "number_of_agents")):
+        swarm.agents[i][0].control_network.set_weights(entity[0])
+    warehouse.swarm = swarm  # Update the swarm in the warehouse
+
     while warehouse.counter <= cfg.get("time_limit"):
         warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
 
@@ -29,6 +34,7 @@ def eval_entity(entity, warehouse, swarm, cfg):
         warehouse.box_c,
         np.asarray(warehouse.ap),
     )
+
 
 class Pretrain:
     def __init__(
@@ -70,7 +76,6 @@ class Pretrain:
         warehouse.generate_ap(self.cfg)
         warehouse.verbose = self.verbose
         return warehouse
-
 
     def init_swarm(self):
         swarm = Swarm(
@@ -128,27 +133,20 @@ class Pretrain:
         return population
 
     def eval_generation(self):
+        args = []
         for i in range(self.population_size):
             entity = self.population[i]
             warehouse = self.init_warehouse()  # Reset warehouse for each entity
             swarm = deepcopy(self.swarm)  # Copy swarm to avoid modifying the original
-            fitness = eval_entity(
-                entity,
-                warehouse,
-                swarm,
-                self.cfg,
-            )
+            args.append((entity, warehouse, swarm, self.cfg))
+
+        # Use multithreading to evaluate entities in parallel
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = list(executor.map(eval_entity, *zip(*args)))
+
+        for i, fitness in enumerate(results):
             print(f"\tEntity {i + 1} fitness: {fitness}")
-            self.population[i] = (entity[0], fitness)  # Update fitness
-
-    # def eval_entity(self, entity):
-    #     for i in range(self.cfg.get("warehouse", "number_of_agents")):
-    #         self.swarm.agents[i][0].control_network.set_weights(entity[0])
-
-    #     self.init_warehouse()
-
-    #     self.run_episode()
-    #     return self.get_fitness()
+            self.population[i] = (self.population[i][0], fitness)  # Update fitness
 
     def run_episode(self):
         while self.warehouse.counter <= self.cfg.get("time_limit"):
