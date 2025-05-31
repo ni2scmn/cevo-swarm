@@ -111,7 +111,7 @@ class Pretrain:
             nn_weights = np.random.uniform(
                 -1, 1, size=self.swarm.agents[0][0].control_network.get_weights().shape
             )
-            population.append((nn_weights, -1))  # (weights, fitness)
+            population.append((nn_weights, -1e6))  # (weights, fitness)
         return population
 
     def eval_generation(self):
@@ -144,7 +144,7 @@ class Pretrain:
                 print("=", end="", flush=True)
 
     def get_fitness(self):
-        return distance_to_closest_ap(
+        return -distance_to_closest_ap(
             self.warehouse.box_c,
             np.asarray(self.warehouse.ap),
         )
@@ -154,15 +154,17 @@ class Pretrain:
             print(f"Generation {generation + 1}/{self.n_generations}")
             self.eval_generation()
             self.population = self.evolve_population()
-            print("Best fitness:", max([entity.fitness for entity in self.population]))
+            print("Best fitness:", max([entity[1] for entity in self.population]))
+            print("Average fitness:", np.mean([entity[1] for entity in self.population]))
 
     def evolve_population(self):
         new_population = []
-        sorted_population = sorted(self.population, key=lambda x: x.fitness, reverse=True)
+        sorted_population = sorted(self.population, key=lambda x: x[1], reverse=True)
 
         # Elitism: keep the best individuals
         if self.elitism:
-            new_population.extend(sorted_population[: self.elitism])
+            n_elite = max(1, int(self.elitism * self.population_size))
+            new_population.extend(sorted_population[:n_elite])
 
         while len(new_population) < self.population_size:
             parent1 = self.select_parent(sorted_population)
@@ -175,24 +177,19 @@ class Pretrain:
 
     def select_parent(self, population):
         # Select a parent based on fitness (roulette wheel selection)
-        total_fitness = sum(entity.fitness for entity in population)
-        selection_probs = [entity.fitness / total_fitness for entity in population]
-        return np.random.choice(population, p=selection_probs)
+        total_fitness = sum(entity[1] for entity in population)
+        selection_probs = [entity[1] / total_fitness for entity in population]
+        idx = np.random.choice(len(population), p=selection_probs)
+        return population[idx]
 
     def crossover(self, parent1, parent2):
         # Simple crossover: average weights of parents
-        child_weights = (parent1.get_weights() + parent2.get_weights()) / 2
-        child = FeedforwardNN(
-            layers=parent1.layers,
-            weight_init=random_weight_init,
-            activation_fun=parent1.activation_funcs,
-        )
-        child.set_weights(child_weights)
-        return child
+        child_weights = (parent1[0] + parent2[0]) / 2
+        return (child_weights, -1e6)
 
     def mutate(self, entity):
         # Simple mutation: add small random noise to weights
         if np.random.rand() < self.mutation_rate:
-            noise = np.random.normal(0, 0.1, size=entity.get_weights().shape)
-            entity.set_weights(entity.get_weights() + noise)
+            noise = np.random.normal(0, 0.1, size=entity[0].shape)
+            entity = (entity[0] + noise, entity[1])  # Keep fitness unchanged
         return entity
