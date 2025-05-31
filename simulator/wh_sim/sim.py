@@ -96,7 +96,7 @@ class Simulator:
         for _ in range(cfg.get("warehouse", "number_of_agents")):
             control_network = FeedforwardNN(
                 layers=nn_layers,
-                weight_init_fun=weight_init_fun,
+                weight_init=weight_init_fun,
                 activation_fun=activation_funcs,
             )
             belief_space = NNBeliefSpace(
