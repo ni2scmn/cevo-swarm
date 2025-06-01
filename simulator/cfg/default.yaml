@@ -4,7 +4,7 @@ robot:
   camera_sensor_range: 100
 
 nn_controller:
-  nn_layers: [2, 2, 3]
+  nn_layers: [3, 3, 3]
   weight_init: [-100, 100]
   activation_funcs: [sigmoid, softmax]
 

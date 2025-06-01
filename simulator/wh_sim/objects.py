@@ -277,6 +277,7 @@ class Swarm:
             camera_range = self.camera_sensor_range_V[r_idx]
 
             robot_carry_state = self.agent_has_box[rob_id]
+            robot_carry_time = warehouse.agent_pickup_time[rob_id]
             distance_to_next_box = rob_min_dists[r_idx]
             type_of_next_box = warehouse.box_types[rob_closest_boxes[r_idx]]
             distance_to_next_ap = rob_ap_min_dists[r_idx]
@@ -331,6 +332,7 @@ class Swarm:
             nn_input = np.array(
                 [
                     robot_carry_state,
+                    robot_carry_time / 100,  # scale carry time
                     # distance_to_next_box,
                     # heading_to_next_box_sin,
                     # heading_to_next_box_cos,
