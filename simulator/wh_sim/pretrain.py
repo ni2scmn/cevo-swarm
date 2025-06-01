@@ -33,8 +33,15 @@ def eval_entity(entity, warehouse, swarm, cfg):
         swarm.agents[i][0].control_network.set_weights(entity[0])
     warehouse.swarm = swarm  # Update the swarm in the warehouse
 
+    log_data = {
+        "box_c": {},
+        "rob_c": {},
+    }
+
     while warehouse.counter <= cfg.get("time_limit"):
         warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
+        log_data["box_c"][warehouse.counter] = warehouse.box_c.tolist()
+        log_data["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
 
     metric = -distance_to_closest_ap(
         warehouse.box_c,
@@ -44,15 +51,14 @@ def eval_entity(entity, warehouse, swarm, cfg):
     # if agent has picked up boxes, return the negative distance to the closest AP
     if np.sum(warehouse.agent_box_pickup_count) == 0:
         # If no boxes were picked up, return a large negative value
-        return -10000
+        return (-10000, log_data)  
     elif np.sum(warehouse.agent_box_dropoff_count) == 0:
         # If no boxes were dropped off, punish the fitness
-        # return metric * 4
-        return metric
+        return (metric * 2, log_data)  
     else:
         # If boxes were picked up, calculate the fitness
         # Calculate the fitness as the negative distance to the closest AP
-        return metric
+        return (metric, log_data) 
 
 
 class Pretrain:
@@ -186,7 +192,8 @@ class Pretrain:
             for arg in tqdm(args, desc="Evaluating entities"):
                 results.append(eval_entity(*arg))
 
-        for i, fitness in enumerate(results):
+        for i, r in enumerate(results):
+            fitness, log_data = r
             print(f"\tEntity {i + 1} fitness: {fitness}")
             self.population[i] = (self.population[i][0], fitness)  # Update fitness
             # Log data for this generation
@@ -203,6 +210,18 @@ class Pretrain:
                 idx_gen,
                 self.log_data[idx_gen]["fitness"],
                 "fitness"
+            )
+            _ = self.st.export_data(
+                "pretrain",
+                idx_gen,
+                log_data["box_c"],
+                "box_c_" + str(i)
+            )
+            _ = self.st.export_data(
+                "pretrain",
+                idx_gen,
+                log_data["rob_c"],
+                "rob_c_" + str(i)
             )
 
     def run_episode(self):
