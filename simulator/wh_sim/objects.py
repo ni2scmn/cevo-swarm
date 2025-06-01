@@ -64,6 +64,7 @@ class Swarm:
         self.number_of_agents = total_agents
         # TODO combine agent_has_box and agent_box_id
         self.agent_has_box = np.zeros(self.number_of_agents)  # agents start with no box
+        self.agent_had_box = np.zeros(self.number_of_agents)  # agents started with no box
         self.agent_box_id = np.zeros(self.number_of_agents, dtype=np.int64) * (
             -1
         )  # record of box id that agent is carrying
@@ -168,7 +169,9 @@ class Swarm:
     # @TODO allow for multiple behaviours, heterogeneous swarm
     def iterate(self, *args, **kwargs):
         self.update_hook()  # allow for updates to the swarm
-        return self.step(*args, **kwargs)
+        res = self.step(*args, **kwargs)  # run the step function
+        self.agent_had_box = self.agent_has_box.copy()  # store the previous state of the agent
+        return res
 
     # rob_c: robot center coordinates
     # box_c: box center coordinates

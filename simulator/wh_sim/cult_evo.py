@@ -54,6 +54,7 @@ class CA(Warehouse):
         self.adapt_rate = adaptive_rate_tuning
 
         self.agent_box_pickup_count = np.zeros(self.swarm.number_of_agents)
+        self.agent_box_dropoff_count = np.zeros(self.swarm.number_of_agents)
 
     # def update_hook(self):
     #
@@ -118,6 +119,11 @@ class CA(Warehouse):
         )
         # add to count if agent has box
         self.agent_box_pickup_count = self.agent_box_pickup_count + self.swarm.agent_has_box
+        # # add to count if agent has dropped box since last iteration
+        # self.agent_has_box false and agend_had_box true
+        self.agent_box_dropoff_count = self.agent_box_dropoff_count + (
+            (self.swarm.agent_has_box == 0) & (self.swarm.agent_had_box == 1)
+        )
 
         # handles logic to move boxes with robots/drop boxes
         t = self.counter % 10
