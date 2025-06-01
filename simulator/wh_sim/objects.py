@@ -324,22 +324,19 @@ class Swarm:
 
             distance_to_next_ap = distance_to_next_ap / dist_scaling  # scale distance to next ap
             distance_to_next_box = distance_to_next_box / dist_scaling  # scale distance to next box
-
-            heading_dev_next_ap = (((heading_to_next_ap - self.computed_heading[r_idx])) + np.pi) % (2 * np.pi) - np.pi
-            heading_dev_next_box = (((heading_to_next_box - self.computed_heading[r_idx])) + np.pi) % (2 * np.pi) - np.pi
-
             # robot carry state
             # distance to box
             # type of box
             # distance to aggregation point
             nn_input = np.array(
-                [
+                [   
+                    self.heading[rob_id],  # robot heading
                     robot_carry_state,
                     robot_carry_time / 100,  # scale carry time
-                    # distance_to_next_box,
-                    # heading_to_next_box_sin,
-                    # heading_to_next_box_cos,
-                    # *next_box_encoding,
+                    distance_to_next_box,
+                    heading_to_next_box_sin,
+                    heading_to_next_box_cos,
+                    *next_box_encoding,
                     #heading_dev_next_ap,
                     distance_to_next_ap,
                     heading_to_next_ap_sin,
@@ -348,11 +345,7 @@ class Swarm:
                     *next_ap_encoding,
                 ]
             )
-            # print(nn_input)
             action = np.argmax(warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input))
-
-            # choose action randomly between 0, 1, 2
-            # action = np.random.randint(0, 2)
 
             if action == 0 and rob_id in rob_can_pickup:
                 box_id = rob_closest_boxes[r_idx]

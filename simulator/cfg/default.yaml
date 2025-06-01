@@ -4,7 +4,7 @@ robot:
   camera_sensor_range: 1000
 
 nn_controller:
-  nn_layers: [6, 6, 3, 3]
+  nn_layers: [13, 10, 6, 3]
   weight_init: [-10, 10]
   activation_funcs: [sigmoid, sigmoid, softmax]
 
@@ -19,7 +19,7 @@ warehouse:
   object_position: 0
 
 train:
-  population_size: 60
+  population_size: 100
   n_generations: 100
   metric: TODO
   mutation_rate: 0.15
