@@ -325,6 +325,9 @@ class Swarm:
             distance_to_next_ap = distance_to_next_ap / dist_scaling  # scale distance to next ap
             distance_to_next_box = distance_to_next_box / dist_scaling  # scale distance to next box
 
+            heading_dev_next_ap = (((heading_to_next_ap - self.computed_heading[r_idx])) + np.pi) % (2 * np.pi) - np.pi
+            heading_dev_next_box = (((heading_to_next_box - self.computed_heading[r_idx])) + np.pi) % (2 * np.pi) - np.pi
+
             # robot carry state
             # distance to box
             # type of box
@@ -337,6 +340,7 @@ class Swarm:
                     # heading_to_next_box_sin,
                     # heading_to_next_box_cos,
                     # *next_box_encoding,
+                    heading_dev_next_ap,
                     distance_to_next_ap,
                     # heading_to_next_ap_sin,
                     # heading_to_next_ap_cos,
