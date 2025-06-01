@@ -9,6 +9,8 @@ from unittest import result
 from simulator.lib.metrics import distance_to_closest_ap
 from simulator.wh_sim.neuroevolution import one_point_crossover, point_mutate
 
+from simulator.lib import TrainSaveTo
+
 dir_root = Path(__file__).resolve().parents[1]
 
 import numpy as np
@@ -74,6 +76,10 @@ class Pretrain:
         self.swarm = self.init_swarm()
         self.warehouse = self.init_warehouse()
         self.population = self.init_population()
+
+        self.log_data = {}
+        self.st = TrainSaveTo()
+        
 
     def init_warehouse(self):
         warehouse = CA(
@@ -149,9 +155,16 @@ class Pretrain:
             )
             population.append((nn_weights, -1e6))  # (weights, fitness)
         return population
+    
 
-    def eval_generation(self):
+    def eval_generation(self, idx_gen):
         args = []
+        self.log_data[idx_gen] = {
+            "population": [],
+            "fitness": [],
+            #"box_c": [],
+            #"rob_c": [],
+        }
         for i in range(self.population_size):
             entity = self.population[i]
             warehouse = deepcopy(self.warehouse)  # Copy warehouse to avoid modifying the original
@@ -176,6 +189,21 @@ class Pretrain:
         for i, fitness in enumerate(results):
             print(f"\tEntity {i + 1} fitness: {fitness}")
             self.population[i] = (self.population[i][0], fitness)  # Update fitness
+            # Log data for this generation
+            self.log_data[idx_gen]["population"].append(self.population[i][0])
+            self.log_data[idx_gen]["fitness"].append(fitness)
+            _ = self.st.export_data(
+                "pretrain",
+                idx_gen,
+                self.log_data[idx_gen]["population"],
+                "population"
+            )
+            _ = self.st.export_data(
+                "pretrain",
+                idx_gen,
+                self.log_data[idx_gen]["fitness"],
+                "fitness"
+            )
 
     def run_episode(self):
         while self.warehouse.counter <= self.cfg.get("time_limit"):
@@ -196,10 +224,10 @@ class Pretrain:
             np.asarray(self.warehouse.ap),
         )
 
-    def run(self):
-        for generation in range(self.n_generations):
-            print(f"Generation {generation + 1}/{self.n_generations}")
-            self.eval_generation()
+    def run(self) -> None:
+        for idx_gen in range(self.n_generations):
+            print(f"Generation {idx_gen + 1}/{self.n_generations}")
+            self.eval_generation(idx_gen)
             print("Best fitness:", max([entity[1] for entity in self.population]))
             print("Average fitness:", np.mean([entity[1] for entity in self.population]))
             self.population = self.evolve_population()

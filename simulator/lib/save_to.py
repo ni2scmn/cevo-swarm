@@ -44,3 +44,25 @@ class SaveTo(GenDir):
         fn = os.path.join(dirname, "metadata.txt")
         with open(fn, "w") as f:
             f.write(json.dumps(ex_cfg))
+
+
+class TrainSaveTo(GenDir):
+    def export_data(self, ex_id, gen, data, filename, transpose=False):
+        if not isinstance(data, pd.DataFrame):
+            data = pd.DataFrame(data)
+        if transpose:
+            data = data.transpose()
+
+        dirname = self.gen_save_dirname(ex_id, str(self.ts) + "_train_" + str(gen), makedir=True)
+        save_path = os.path.join(dirname, "%s.csv" % filename)
+        try:
+            data.to_csv(save_path, index=False)
+        except Exception as e:
+            print(e)
+        finally:
+            return dirname
+
+    def export_metadata(self, dirname, ex_cfg):
+        fn = os.path.join(dirname, "metadata.txt")
+        with open(fn, "w") as f:
+            f.write(json.dumps(ex_cfg))
