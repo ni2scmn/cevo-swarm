@@ -42,10 +42,11 @@ def eval_entity(entity, warehouse, swarm, cfg):
     # if agent has picked up boxes, return the negative distance to the closest AP
     if np.sum(warehouse.agent_box_pickup_count) == 0:
         # If no boxes were picked up, return a large negative value
-        return -1e6
+        return -10000
     elif np.sum(warehouse.agent_box_dropoff_count) == 0:
         # If no boxes were dropped off, punish the fitness
-        return metric * 4
+        # return metric * 4
+        return metric
     else:
         # If boxes were picked up, calculate the fitness
         # Calculate the fitness as the negative distance to the closest AP
@@ -213,18 +214,18 @@ class Pretrain:
             new_population.extend(sorted_population[:n_elite])
 
         while len(new_population) < self.population_size:
-            parent1 = self.select_parent_tournament(sorted_population, tournament_size=4)
-            parent2 = self.select_parent_tournament(sorted_population, tournament_size=4)
+            parent1 = self.select_parent_tournament(sorted_population, tournament_size=6)
+            parent2 = self.select_parent_tournament(sorted_population, tournament_size=6)
             if np.random.rand() < self.crossover_rate:
                 child1, child2 = one_point_crossover(parent1, parent2)
             else:
                 child1, child2 = parent1, parent2
 
             child1 = point_mutate(
-                child1, self.mutation_rate, mutation=np.random.normal(0, 5, size=child1[0].shape)
+                child1, self.mutation_rate, mutation=np.random.normal(0, 2, size=child1[0].shape)
             )
             child2 = point_mutate(
-                child2, self.mutation_rate, mutation=np.random.normal(0, 5, size=child2[0].shape)
+                child2, self.mutation_rate, mutation=np.random.normal(0, 2, size=child2[0].shape)
             )
             new_population.append((child1, -1e6))
             new_population.append((child2, -1e6))

@@ -4,15 +4,15 @@ robot:
   camera_sensor_range: 1000
 
 nn_controller:
-  nn_layers: [4, 3, 3]
-  weight_init: [-100, 100]
-  activation_funcs: [sigmoid, softmax]
+  nn_layers: [6, 6, 3, 3]
+  weight_init: [-10, 10]
+  activation_funcs: [sigmoid, sigmoid, softmax]
 
 warehouse:
   box_radius: 5.0
   width: 500
   height: 500
-  number_of_agents: 20
+  number_of_agents: 10
   number_of_boxes: 100
   repulsion_wall: 25
   repulsion_object: 5
@@ -22,7 +22,7 @@ train:
   population_size: 60
   n_generations: 100
   metric: TODO
-  mutation_rate: 0.1
+  mutation_rate: 0.15
   crossover_rate: 0.1
   elitism: 0.15
   parallel: True
@@ -30,11 +30,11 @@ train:
 
 faults: []
 
-time_limit: 2000
+time_limit: 3000
 animate: False
 save_animation: False
 export_data: True
-export_steps: 2000
+export_steps: 3000
 heading_bias: False
 box_attraction: False
 heading_change_rate: 10 # ticks per change in heading

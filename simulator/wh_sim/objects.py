@@ -340,12 +340,12 @@ class Swarm:
                     # heading_to_next_box_sin,
                     # heading_to_next_box_cos,
                     # *next_box_encoding,
-                    heading_dev_next_ap,
+                    #heading_dev_next_ap,
                     distance_to_next_ap,
-                    # heading_to_next_ap_sin,
-                    # heading_to_next_ap_cos,
+                    heading_to_next_ap_sin,
+                    heading_to_next_ap_cos,
                     # one-hot encoding of the closest aggregation point
-                    # *next_ap_encoding,
+                    *next_ap_encoding,
                 ]
             )
             # print(nn_input)
