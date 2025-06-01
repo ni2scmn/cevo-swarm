@@ -158,14 +158,19 @@ class Pretrain:
             args.append((entity, warehouse, swarm, self.cfg))
 
         # Use multithreading to evaluate entities in parallel
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            results = list(
-                tqdm(
+        if self.cfg.get("train", "parallel"):
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                results = list(
+                    tqdm(
                     executor.map(eval_entity, *zip(*args)),
                     total=len(args),
                     desc="Evaluating entities",
-                )
+                    )
             )
+        else:
+            results = []
+            for arg in tqdm(args, desc="Evaluating entities"):
+                results.append(eval_entity(*arg))
 
         for i, fitness in enumerate(results):
             print(f"\tEntity {i + 1} fitness: {fitness}")
