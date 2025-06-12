@@ -6,7 +6,7 @@ import sys
 from tqdm import tqdm
 import concurrent.futures
 from unittest import result
-from simulator.lib.metrics import distance_to_closest_ap
+from simulator.lib.metrics import distance_to_closest_ap, symmetry
 from simulator.wh_sim.neuroevolution import one_point_crossover, point_mutate
 
 from simulator.lib import TrainSaveTo
@@ -293,3 +293,12 @@ class Pretrain:
         tournament = random.sample(population, tournament_size)
         best_entity = max(tournament, key=lambda x: x[1])
         return best_entity[0]
+
+
+def set_pretrain_metric(metric_str: str):
+    if metric_str == 'ap_distance':
+        return lambda box_c, ap_c, _dim: -distance_to_closest_ap(box_c, ap_c)
+    elif metric_str == 'left_right':
+        return lambda box_c, _ap_c, dim: symmetry(box_c, dim, "x_axis")
+    else:
+        raise ValueError("unvalid pretrain metric")
