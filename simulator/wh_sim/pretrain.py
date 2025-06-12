@@ -33,30 +33,31 @@ def eval_entity(entity, warehouse, swarm, cfg):
         swarm.agents[i][0].control_network.set_weights(entity[0])
     warehouse.swarm = swarm  # Update the swarm in the warehouse
 
-    log_data = {
+    entity_log = {
         "box_c": {},
         "rob_c": {},
     }
 
     while warehouse.counter <= cfg.get("time_limit"):
         warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
-        log_data["box_c"][warehouse.counter] = warehouse.box_c.tolist()
-        log_data["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
+        
+        entity_log["box_c"][warehouse.counter] = warehouse.box_c.tolist()
+        entity_log["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
 
-    metric_fun = set_pretrain_metric(cfg.get("train", "metric"))
-    metric = metric_fun(warehouse.box_c, np.asarray(warehouse.ap), ((warehouse.width, warehouse.height)))
+    fitness_fun = set_pretrain_metric(cfg.get("train", "metric"))
+    fitness = fitness_fun(warehouse.box_c, np.asarray(warehouse.ap), ((warehouse.width, warehouse.height)))
 
     # if agent has picked up boxes, return the negative distance to the closest AP
     if np.sum(warehouse.agent_box_pickup_count) == 0:
         # If no boxes were picked up, return a large negative value
-        return (-10000, log_data)
+        return (-10000, entity_log)
     elif np.sum(warehouse.agent_box_dropoff_count) == 0:
         # If no boxes were dropped off, punish the fitness
-        return (metric * 2, log_data)
+        return (fitness * 2 if fitness < 0 else fitness / 2, entity_log)
     else:
         # If boxes were picked up, calculate the fitness
         # Calculate the fitness as the negative distance to the closest AP
-        return (metric, log_data)
+        return (fitness, entity_log)
 
 
 class Pretrain:
