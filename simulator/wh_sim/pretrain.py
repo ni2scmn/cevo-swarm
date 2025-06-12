@@ -43,10 +43,8 @@ def eval_entity(entity, warehouse, swarm, cfg):
         log_data["box_c"][warehouse.counter] = warehouse.box_c.tolist()
         log_data["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
 
-    metric = -distance_to_closest_ap(
-        warehouse.box_c,
-        np.asarray(warehouse.ap),
-    )
+    metric_fun = set_pretrain_metric(cfg.get("train", "metric"))
+    metric = metric_fun(warehouse.box_c, np.asarray(warehouse.ap), ((warehouse.width, warehouse.height)))
 
     # if agent has picked up boxes, return the negative distance to the closest AP
     if np.sum(warehouse.agent_box_pickup_count) == 0:
