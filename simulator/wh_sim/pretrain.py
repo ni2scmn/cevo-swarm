@@ -47,17 +47,26 @@ def eval_entity(entity, warehouse, swarm, cfg):
     fitness_fun = set_pretrain_metric(cfg.get("train", "metric"))
     fitness = fitness_fun(warehouse.box_c, np.asarray(warehouse.ap), ((warehouse.width, warehouse.height)))
 
-    # if agent has picked up boxes, return the negative distance to the closest AP
-    if np.sum(warehouse.agent_box_pickup_count) == 0:
-        # If no boxes were picked up, return a large negative value
-        return (-10000, entity_log)
-    elif np.sum(warehouse.agent_box_dropoff_count) == 0:
-        # If no boxes were dropped off, punish the fitness
-        return (fitness * 2 if fitness < 0 else fitness / 2, entity_log)
-    else:
-        # If boxes were picked up, calculate the fitness
-        # Calculate the fitness as the negative distance to the closest AP
-        return (fitness, entity_log)
+    return (fitness, entity_log)
+
+    # # if agent has picked up boxes, return the negative distance to the closest AP
+    # if np.sum(warehouse.agent_box_pickup_count) == 0:
+    #     # If no boxes were picked up, return a large negative value
+    #     return (-10000, entity_log)
+    # elif np.sum(warehouse.agent_box_dropoff_count) == 0:
+    #     # If no boxes were dropped off, punish the fitness
+    #     return (fitness * 2 if fitness < 0 else fitness / 2, entity_log)
+    # else:
+    #     # If boxes were picked up, calculate the fitness
+    #     # Calculate the fitness as the negative distance to the closest AP
+    #     return (fitness, entity_log)
+
+
+def export_entity_logs(entity_logs, ts, idx_gen, idx_entity):
+    st = TrainSaveTo(ts)
+    _ = st.export_data("pretrain", idx_gen, entity_logs["box_c"], "box_c_" + str(idx_entity))
+    _ = st.export_data("pretrain", idx_gen, entity_logs["rob_c"], "rob_c_" + str(idx_entity))
+        
 
 
 class Pretrain:
@@ -83,7 +92,9 @@ class Pretrain:
         self.population = self.init_population()
 
         self.log_data = {}
-        self.st = TrainSaveTo()
+        self.ts = int(datetime.datetime.now().timestamp())
+        self.st = TrainSaveTo(self.ts)
+
 
     def init_warehouse(self):
         warehouse = CA(
@@ -189,21 +200,39 @@ class Pretrain:
             for arg in tqdm(args, desc="Evaluating entities"):
                 results.append(eval_entity(*arg))
 
+        entity_logs = []
+
         for i, r in enumerate(results):
-            fitness, log_data = r
+            fitness, entity_log = r
             print(f"\tEntity {i + 1} fitness: {fitness}")
             self.population[i] = (self.population[i][0], fitness)  # Update fitness
             # Log data for this generation
             self.log_data[idx_gen]["population"].append(self.population[i][0])
             self.log_data[idx_gen]["fitness"].append(fitness)
-            _ = self.st.export_data(
-                "pretrain", idx_gen, self.log_data[idx_gen]["population"], "population"
-            )
-            _ = self.st.export_data(
-                "pretrain", idx_gen, self.log_data[idx_gen]["fitness"], "fitness"
-            )
-            _ = self.st.export_data("pretrain", idx_gen, log_data["box_c"], "box_c_" + str(i))
-            _ = self.st.export_data("pretrain", idx_gen, log_data["rob_c"], "rob_c_" + str(i))
+            entity_logs.append(entity_log)
+
+            self.st.gen_save_dirname("pretrain", str(self.ts) + "_train_" + str(idx_gen), makedir=True)
+
+        if self.cfg.get("train", "parallel"):
+            with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+                ts = deepcopy(self.ts)
+                results = list(
+                    tqdm(
+                        executor.map(export_entity_logs, entity_logs, [ts] * len(entity_logs), [idx_gen] * len(entity_logs), range(self.population_size)),
+                        total=len(entity_logs),
+                        desc="Exporting entity logs",
+                    )
+                )
+        else:
+            raise NotImplementedError("Sequential export not implemented yet")
+
+        _ = self.st.export_data(
+            "pretrain", idx_gen, self.log_data[idx_gen]["population"], "population"
+        )
+        _ = self.st.export_data(
+            "pretrain", idx_gen, self.log_data[idx_gen]["fitness"], "fitness"
+        )
+
 
     def run_episode(self):
         while self.warehouse.counter <= self.cfg.get("time_limit"):

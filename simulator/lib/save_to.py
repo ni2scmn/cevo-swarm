@@ -47,13 +47,17 @@ class SaveTo(GenDir):
 
 
 class TrainSaveTo(GenDir):
+
+    def __init__(self, ts):
+        self.ts = ts
+
     def export_data(self, ex_id, gen, data, filename, transpose=False):
         if not isinstance(data, pd.DataFrame):
             data = pd.DataFrame(data)
         if transpose:
             data = data.transpose()
 
-        dirname = self.gen_save_dirname(ex_id, str(self.ts) + "_train_" + str(gen), makedir=True)
+        dirname = self.gen_save_dirname(ex_id, str(self.ts) + "_train_" + str(gen), makedir=False)
         save_path = os.path.join(dirname, "%s.csv" % filename)
         try:
             data.to_csv(save_path, index=False)
