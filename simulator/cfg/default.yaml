@@ -19,8 +19,8 @@ warehouse:
   object_position: 0
 
 train:
-  population_size: 100
-  n_generations: 100
+  population_size: 200
+  n_generations: 200
   metric: left_right
   mutation_rate: 0.15
   crossover_rate: 0.1
@@ -30,11 +30,11 @@ train:
 
 faults: []
 
-time_limit: 3000
+time_limit: 4000
 animate: False
 save_animation: False
 export_data: True
-export_steps: 3000
+export_steps: 4000
 heading_bias: False
 box_attraction: False
 heading_change_rate: 10 # ticks per change in heading

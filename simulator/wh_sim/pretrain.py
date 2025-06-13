@@ -63,10 +63,13 @@ def eval_entity(entity, warehouse, swarm, cfg):
 
 
 def export_entity_logs(entity_logs, ts, idx_gen, idx_entity):
-    st = TrainSaveTo(ts)
-    _ = st.export_data("pretrain", idx_gen, entity_logs["box_c"], "box_c_" + str(idx_entity))
-    _ = st.export_data("pretrain", idx_gen, entity_logs["rob_c"], "rob_c_" + str(idx_entity))
-        
+    try:
+        st = TrainSaveTo(ts)
+        _ = st.export_data("pretrain", idx_gen, entity_logs["box_c"], "box_c_" + str(idx_entity))
+        _ = st.export_data("pretrain", idx_gen, entity_logs["rob_c"], "rob_c_" + str(idx_entity))
+    except Exception as e:
+        print(f"Error exporting entity logs for entity {idx_entity}: {e}")
+        pass        
 
 
 class Pretrain:
@@ -209,22 +212,22 @@ class Pretrain:
             # Log data for this generation
             self.log_data[idx_gen]["population"].append(self.population[i][0])
             self.log_data[idx_gen]["fitness"].append(fitness)
-            entity_logs.append(entity_log)
+            #entity_logs.append(entity_log)
 
             self.st.gen_save_dirname("pretrain", str(self.ts) + "_train_" + str(idx_gen), makedir=True)
 
-        if self.cfg.get("train", "parallel"):
-            with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-                ts = deepcopy(self.ts)
-                results = list(
-                    tqdm(
-                        executor.map(export_entity_logs, entity_logs, [ts] * len(entity_logs), [idx_gen] * len(entity_logs), range(self.population_size)),
-                        total=len(entity_logs),
-                        desc="Exporting entity logs",
-                    )
-                )
-        else:
-            raise NotImplementedError("Sequential export not implemented yet")
+        # if self.cfg.get("train", "parallel"):
+        #     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+        #         ts = deepcopy(self.ts)
+        #         results = list(
+        #             tqdm(
+        #                 executor.map(export_entity_logs, entity_logs, [ts] * len(entity_logs), [idx_gen] * len(entity_logs), range(self.population_size)),
+        #                 total=len(entity_logs),
+        #                 desc="Exporting entity logs",
+        #             )
+        #         )
+        # else:
+        #     raise NotImplementedError("Sequential export not implemented yet")
 
         _ = self.st.export_data(
             "pretrain", idx_gen, self.log_data[idx_gen]["population"], "population"
