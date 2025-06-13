@@ -6,7 +6,7 @@ import sys
 from tqdm import tqdm
 import concurrent.futures
 from unittest import result
-from simulator.lib.metrics import distance_to_closest_ap
+from simulator.lib.metrics import distance_to_closest_ap, symmetry
 from simulator.wh_sim.neuroevolution import one_point_crossover, point_mutate
 
 from simulator.lib import TrainSaveTo
@@ -33,32 +33,31 @@ def eval_entity(entity, warehouse, swarm, cfg):
         swarm.agents[i][0].control_network.set_weights(entity[0])
     warehouse.swarm = swarm  # Update the swarm in the warehouse
 
-    log_data = {
+    entity_log = {
         "box_c": {},
         "rob_c": {},
     }
 
     while warehouse.counter <= cfg.get("time_limit"):
         warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
-        log_data["box_c"][warehouse.counter] = warehouse.box_c.tolist()
-        log_data["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
+        
+        entity_log["box_c"][warehouse.counter] = warehouse.box_c.tolist()
+        entity_log["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
 
-    metric = -distance_to_closest_ap(
-        warehouse.box_c,
-        np.asarray(warehouse.ap),
-    )
+    fitness_fun = set_pretrain_metric(cfg.get("train", "metric"))
+    fitness = fitness_fun(warehouse.box_c, np.asarray(warehouse.ap), ((warehouse.width, warehouse.height)))
 
     # if agent has picked up boxes, return the negative distance to the closest AP
     if np.sum(warehouse.agent_box_pickup_count) == 0:
         # If no boxes were picked up, return a large negative value
-        return (-10000, log_data)  
+        return (-10000, entity_log)
     elif np.sum(warehouse.agent_box_dropoff_count) == 0:
         # If no boxes were dropped off, punish the fitness
-        return (metric * 2, log_data)  
+        return (fitness * 2 if fitness < 0 else fitness / 2, entity_log)
     else:
         # If boxes were picked up, calculate the fitness
         # Calculate the fitness as the negative distance to the closest AP
-        return (metric, log_data) 
+        return (fitness, entity_log)
 
 
 class Pretrain:
@@ -85,7 +84,6 @@ class Pretrain:
 
         self.log_data = {}
         self.st = TrainSaveTo()
-        
 
     def init_warehouse(self):
         warehouse = CA(
@@ -161,15 +159,14 @@ class Pretrain:
             )
             population.append((nn_weights, -1e6))  # (weights, fitness)
         return population
-    
 
     def eval_generation(self, idx_gen):
         args = []
         self.log_data[idx_gen] = {
             "population": [],
             "fitness": [],
-            #"box_c": [],
-            #"rob_c": [],
+            # "box_c": [],
+            # "rob_c": [],
         }
         for i in range(self.population_size):
             entity = self.population[i]
@@ -182,11 +179,11 @@ class Pretrain:
             with concurrent.futures.ProcessPoolExecutor() as executor:
                 results = list(
                     tqdm(
-                    executor.map(eval_entity, *zip(*args)),
-                    total=len(args),
-                    desc="Evaluating entities",
+                        executor.map(eval_entity, *zip(*args)),
+                        total=len(args),
+                        desc="Evaluating entities",
                     )
-            )
+                )
         else:
             results = []
             for arg in tqdm(args, desc="Evaluating entities"):
@@ -200,29 +197,13 @@ class Pretrain:
             self.log_data[idx_gen]["population"].append(self.population[i][0])
             self.log_data[idx_gen]["fitness"].append(fitness)
             _ = self.st.export_data(
-                "pretrain",
-                idx_gen,
-                self.log_data[idx_gen]["population"],
-                "population"
+                "pretrain", idx_gen, self.log_data[idx_gen]["population"], "population"
             )
             _ = self.st.export_data(
-                "pretrain",
-                idx_gen,
-                self.log_data[idx_gen]["fitness"],
-                "fitness"
+                "pretrain", idx_gen, self.log_data[idx_gen]["fitness"], "fitness"
             )
-            _ = self.st.export_data(
-                "pretrain",
-                idx_gen,
-                log_data["box_c"],
-                "box_c_" + str(i)
-            )
-            _ = self.st.export_data(
-                "pretrain",
-                idx_gen,
-                log_data["rob_c"],
-                "rob_c_" + str(i)
-            )
+            _ = self.st.export_data("pretrain", idx_gen, log_data["box_c"], "box_c_" + str(i))
+            _ = self.st.export_data("pretrain", idx_gen, log_data["rob_c"], "rob_c_" + str(i))
 
     def run_episode(self):
         while self.warehouse.counter <= self.cfg.get("time_limit"):
@@ -293,3 +274,12 @@ class Pretrain:
         tournament = random.sample(population, tournament_size)
         best_entity = max(tournament, key=lambda x: x[1])
         return best_entity[0]
+
+
+def set_pretrain_metric(metric_str: str):
+    if metric_str == "ap_distance":
+        return lambda box_c, ap_c, _dim: -distance_to_closest_ap(box_c, ap_c)
+    elif metric_str == "left_right":
+        return lambda box_c, _ap_c, dim: symmetry(box_c, dim, "x_axis")
+    else:
+        raise ValueError("unvalid pretrain metric")

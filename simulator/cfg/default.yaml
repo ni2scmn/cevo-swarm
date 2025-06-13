@@ -21,7 +21,7 @@ warehouse:
 train:
   population_size: 100
   n_generations: 100
-  metric: TODO
+  metric: left_right
   mutation_rate: 0.15
   crossover_rate: 0.1
   elitism: 0.15

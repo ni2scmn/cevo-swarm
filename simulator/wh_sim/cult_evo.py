@@ -125,7 +125,9 @@ class CA(Warehouse):
         self.agent_box_dropoff_count = self.agent_box_dropoff_count + (
             (self.swarm.agent_has_box == 0) & (self.swarm.agent_had_box == 1)
         )
-        self.agent_pickup_time = self.swarm.agent_has_box * self.agent_pickup_time + self.swarm.agent_has_box
+        self.agent_pickup_time = (
+            self.swarm.agent_has_box * self.agent_pickup_time + self.swarm.agent_has_box
+        )
 
         # handles logic to move boxes with robots/drop boxes
         t = self.counter % 10
