@@ -6,6 +6,11 @@ from collections import deque
 
 from simulator.wh_sim.nn import FeedforwardNN, NNBeliefSpace
 
+import math
+
+def normalize_angle(angle):
+    return (angle + math.pi) % (2 * math.pi) - math.pi
+
 
 class Robot:
     # max_v: max speed, assume robot moves at max speed if healthy
@@ -270,7 +275,7 @@ class Swarm:
 
         # scale distances by the maximum distance in the warehouse (diagonal length)
         dist_scaling = math.sqrt(warehouse.width**2 + warehouse.height**2)
-
+        
         for rob_id in np.union1d(rob_can_pickup, rob_can_dropoff):
             r_idx = np.where(robots == rob_id)[0][0]
 
@@ -282,19 +287,27 @@ class Swarm:
             type_of_next_box = warehouse.box_types[rob_closest_boxes[r_idx]]
             distance_to_next_ap = rob_ap_min_dists[r_idx]
 
+            rob_heading = normalize_angle(self.heading[rob_id])
             # calculate the heading from the robot to the closest box and aggregation point
-            heading_to_next_box = np.arctan2(
+            heading_to_next_box = normalize_angle(np.arctan2(
                 warehouse.box_c[rob_closest_boxes[r_idx]][1] - warehouse.rob_c[rob_id][1],
                 warehouse.box_c[rob_closest_boxes[r_idx]][0] - warehouse.rob_c[rob_id][0],
-            )
-            heading_to_next_ap = np.arctan2(
+            ))
+            heading_to_next_ap = normalize_angle(np.arctan2(
                 warehouse.ap[rob_closest_ap[r_idx]][1] - warehouse.rob_c[rob_id][1],
                 warehouse.ap[rob_closest_ap[r_idx]][0] - warehouse.rob_c[rob_id][0],
-            )
+            ))
+            box_heading_dev = np.abs(rob_heading % np.pi - heading_to_next_box % np.pi)
+            ap_heading_dev = np.abs(rob_heading % np.pi - heading_to_next_ap % np.pi)
 
             # one-hot encoding of the closest aggregation point and type of box
-            next_ap_encoding = np.zeros(self.no_ap)
-            next_box_encoding = np.zeros(self.no_box_t)
+            # next_ap_encoding = np.zeros(self.no_ap)
+            # next_box_encoding = np.zeros(self.no_box_t)
+            next_ap_encoding = np.zeros(3) # hardcoded for 3 aggregation points
+            next_box_encoding = np.zeros(3)  # hardcoded for 3 box types
+
+            rob_heading_sin = np.sin(rob_heading)
+            rob_heading_cos = np.cos(rob_heading)
 
             # apply camera range limit
             # if too far away, cap to camera range and do not encode type
@@ -330,21 +343,28 @@ class Swarm:
             # distance to aggregation point
             nn_input = np.array(
                 [
-                    self.heading[rob_id],  # robot heading
                     robot_carry_state,
                     robot_carry_time / 100,  # scale carry time
+                    
+                    rob_heading_sin,
+                    rob_heading_cos,
+
                     distance_to_next_box,
                     heading_to_next_box_sin,
                     heading_to_next_box_cos,
+                    box_heading_dev,
+                    # one-hot encoding of the closest box
                     *next_box_encoding,
-                    # heading_dev_next_ap,
+
                     distance_to_next_ap,
                     heading_to_next_ap_sin,
                     heading_to_next_ap_cos,
+                    ap_heading_dev,
                     # one-hot encoding of the closest aggregation point
                     *next_ap_encoding,
                 ]
             )
+            
             action = np.argmax(warehouse.swarm.agents[rob_id][0].control_network.forward(nn_input))
 
             if action == 0 and rob_id in rob_can_pickup:
