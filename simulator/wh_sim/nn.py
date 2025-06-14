@@ -131,7 +131,18 @@ class NNBeliefSpace:
 
 
 def sigmoid(x: NDArray[np.float64]) -> NDArray[np.float64]:
-    return 1 / (1 + np.exp(-x))
+    out = np.empty_like(x)
+    positive_mask = x >= 0
+    negative_mask = ~positive_mask
+
+    # For positive values of x
+    out[positive_mask] = 1 / (1 + np.exp(-x[positive_mask]))
+
+    # For negative values of x (to avoid overflow of np.exp(-x))
+    exp_x = np.exp(x[negative_mask])
+    out[negative_mask] = exp_x / (1 + exp_x)
+
+    return out
 
 
 def tanh(x: NDArray[np.float64]) -> NDArray[np.float64]:
