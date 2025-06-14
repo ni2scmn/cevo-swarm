@@ -111,6 +111,13 @@ class Simulator:
 
         swarm.generate()
         swarm.init_params(cfg)
+
+        culture = cfg.get("culture")
+        if "weights" in culture[0]:
+
+            for i, agent in enumerate(swarm.agents):
+                swarm.agents[i][0].control_network.set_weights(np.array(culture[0]["weights"]))
+
         return swarm
 
     # iterate method called once per timestep
