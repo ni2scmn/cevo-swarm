@@ -178,7 +178,7 @@ class Pretrain:
     def init_population(self):
         population = []
 
-        if self.cfg.get("train", "start_from") is not None:
+        if "start_from" in self.cfg.get("train"):
             population = parse_population_csv(self.cfg.get("train", "start_from"))
             population = [(np.array(weights), -1e6) for weights in population] # (weights, fitness)
             return population
