@@ -33,20 +33,20 @@ def eval_entity(entity, warehouse, swarm, cfg):
         swarm.agents[i][0].control_network.set_weights(entity[0])
     warehouse.swarm = swarm  # Update the swarm in the warehouse
 
-    entity_log = {
-        "box_c": {},
-        "rob_c": {},
-    }
+    # entity_log = {
+    #     "box_c": {},
+    #     "rob_c": {},
+    # }
 
     while warehouse.counter <= cfg.get("time_limit"):
         warehouse.iterate(cfg.get("heading_bias"), cfg.get("box_attraction"))
         
-        entity_log["box_c"][warehouse.counter] = warehouse.box_c.tolist()
-        entity_log["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
+        # entity_log["box_c"][warehouse.counter] = warehouse.box_c.tolist()
+        # entity_log["rob_c"][warehouse.counter] = warehouse.rob_c.tolist()
 
     fitness_fun = set_pretrain_metric(cfg.get("train", "metric"))
     fitness = fitness_fun(warehouse.box_c, np.asarray(warehouse.ap), ((warehouse.width, warehouse.height)))
-
+    entity_log = None
     return (fitness, entity_log)
 
     # # if agent has picked up boxes, return the negative distance to the closest AP
@@ -332,5 +332,11 @@ def set_pretrain_metric(metric_str: str):
         return lambda box_c, ap_c, _dim: -distance_to_closest_ap(box_c, ap_c)
     elif metric_str == "left_right":
         return lambda box_c, _ap_c, dim: symmetry(box_c, dim, "x_axis")
+    elif metric_str == "right_left":
+        return lambda box_c, _ap_c, dim: -symmetry(box_c, dim, "x_axis")
+    elif metric_str == "top_bottom":
+        return lambda box_c, _ap_c, dim: symmetry(box_c, dim, "y_axis")
+    elif metric_str == "bottom_top":
+        return lambda box_c, _ap_c, dim: -symmetry(box_c, dim, "y_axis")
     else:
         raise ValueError("unvalid pretrain metric")
