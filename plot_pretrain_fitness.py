@@ -3,7 +3,7 @@ import csv
 import re
 from collections import defaultdict
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def analyze_fitness_over_generations(root_dir, id, invalid_value=-10000.0, plot=True):
     generation_stats = {}
@@ -39,9 +39,19 @@ def analyze_fitness_over_generations(root_dir, id, invalid_value=-10000.0, plot=
         max_values = [generation_stats[gen]["max_fitness"] for gen in generations]
         avg_values = [generation_stats[gen]["avg_fitness"] for gen in generations]
 
+        # Compute linear regression for max and avg fitness
+        gen_array = np.array(generations)
+        max_fit = np.poly1d(np.polyfit(gen_array, max_values, 1))
+        avg_fit = np.poly1d(np.polyfit(gen_array, avg_values, 1))
+
         plt.figure(figsize=(10, 6))
         plt.plot(generations, max_values, label="Max Fitness", marker="o")
         plt.plot(generations, avg_values, label="Avg Fitness", marker="x")
+
+        # Plot regression lines
+        plt.plot(generations, max_fit(gen_array), label="Max Fitness Trend", linestyle="--", color="blue")
+        plt.plot(generations, avg_fit(gen_array), label="Avg Fitness Trend", linestyle="--", color="orange")
+
         plt.xlabel("Generation")
         plt.ylabel("Fitness")
         plt.title("Fitness Over Generations")
