@@ -72,6 +72,19 @@ def export_entity_logs(entity_logs, ts, idx_gen, idx_entity):
         pass        
 
 
+def parse_population_csv(population_csv_path):
+    """
+    Parse the population CSV file and return a list of numpy arrays.
+    """
+    population = []
+    with open(population_csv_path, 'r') as f:
+        f.readline()  # Skip the header line
+        for line in f:
+            # Convert each value to float and wrap in a NumPy array
+            float_array = np.array([float(value) for value in line.strip().split(',')], dtype=float)
+            population.append(float_array)
+    return population
+
 class Pretrain:
     def __init__(
         self,
@@ -164,6 +177,12 @@ class Pretrain:
 
     def init_population(self):
         population = []
+
+        if self.cfg.get("train", "start_from") is not None:
+            population = parse_population_csv(self.cfg.get("train", "start_from"))
+            population = [(np.array(weights), -1e6) for weights in population] # (weights, fitness)
+            return population
+
         weight_init = self.cfg.get("nn_controller", "weight_init")
         for _ in range(self.population_size):
             nn_weights = np.random.uniform(
