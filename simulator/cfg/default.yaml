@@ -22,8 +22,8 @@ train:
   population_size: 200
   n_generations: 200
   metric: left_right
-  mutation_rate: 0.15
-  crossover_rate: 0.1
+  mutation_rate: 0.25
+  crossover_rate: 0.2
   elitism: 0.15
   parallel: True
   

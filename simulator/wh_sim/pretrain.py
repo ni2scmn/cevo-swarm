@@ -301,10 +301,10 @@ class Pretrain:
                 child1, child2 = parent1, parent2
 
             child1 = point_mutate(
-                child1, self.mutation_rate, mutation=np.random.normal(0, 1, size=child1[0].shape)
+                child1, self.mutation_rate, mutation=np.random.normal(0, 2, size=child1[0].shape)
             )
             child2 = point_mutate(
-                child2, self.mutation_rate, mutation=np.random.normal(0, 1, size=child2[0].shape)
+                child2, self.mutation_rate, mutation=np.random.normal(0, 2, size=child2[0].shape)
             )
             new_population.append((child1, -1e6))
             new_population.append((child2, -1e6))
