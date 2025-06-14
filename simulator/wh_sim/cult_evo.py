@@ -139,7 +139,7 @@ class CA(Warehouse):
         )  # move the boxes by the amount equal to the robot carrying them
         self.box_c = self.box_c + self.box_d
 
-        self.swarm.compute_metrics(self)
+        #self.swarm.compute_metrics(self)
         s, u, e = self.select_phase()
         self.socialize(s)
         self.update(u)

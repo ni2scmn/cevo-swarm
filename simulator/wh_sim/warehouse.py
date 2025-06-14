@@ -200,7 +200,7 @@ class Warehouse:
         # execute pickup/dropoff
         self.execute_pickup_dropoff()
 
-        self.swarm.compute_metrics()
+        #self.swarm.compute_metrics()
         self.counter += 1
         self.swarm.counter = self.counter
 
