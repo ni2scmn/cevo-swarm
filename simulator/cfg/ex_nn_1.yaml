@@ -1,5 +1,26 @@
 #### Experiments
 
+e_nn_0:
+  data_dir: "e_nn_0"
+  description: "randomly initialized robots"
+  box_type_ratio: [0.33, 0.33, 0.34]
+  phase_ratio: [0,0,1]
+  phase_change_rate: 10
+  runs: 50
+  adaptive_rate_tuning: False
+  ap:
+    - [0.75,0.75]
+    - [0.25,0.25]
+    - [0.75, 0.25]
+  culture:
+    - ratio: 1
+      params: [0.35,0.5,0.03,0.15, 0.35,0.5,0.03,0.15, 0.35,0.5,0.03,0.15]
+      # order: Pm, D_m, SC, r0
+      use_fixed_rates: false # Same across all agents in a subculture,
+      influence_rate: 0 # unused
+      resistance_rate: 0 # unused
+
+
 e_nn_1:
   data_dir: "e_nn_1"
   description: "Just move to right robots"
