@@ -7,3 +7,6 @@ res/
 animation/
 venv/
 logs/
+
+best_weights.txt
+experiment_setups

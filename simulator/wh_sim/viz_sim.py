@@ -80,7 +80,7 @@ class VizSim(Simulator):
             h_line[i].set_data(h_x_vec[i], h_y_vec[i])
 
         realtime = int(np.ceil(counter / 50))
-        plt.title("Time is " + str(realtime) + "s")
+        plt.title("Time is " + str(realtime) + "s\nCounter: " + str(counter))
 
     def take_snapshot(self, counter):
         if counter not in self.snapshot_s:
