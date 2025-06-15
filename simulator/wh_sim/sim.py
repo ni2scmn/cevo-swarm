@@ -136,7 +136,7 @@ class Simulator:
 
     def exit_sim(self, counter):
         if counter > self.cfg.get("time_limit"):
-            print("Exiting...")
+            #print("Exiting...")
             self.exit_threads = True
 
     def run(self):

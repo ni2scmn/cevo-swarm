@@ -4,32 +4,14 @@ from simulator import CFG_FILES
 import time
 import numpy as np
 
-###### Experiment parameters ######
-
-ex_id = "e_1"
-verbose = False
-export_data = True
-
-###### Config class ######
-
-default_cfg_file = CFG_FILES["default"]
-cfg_file = CFG_FILES["ex_1"]
-cfg_obj = Config(cfg_file, default_cfg_file, ex_id=ex_id)
-
 ###### Functions ######
 
-
-###### Run experiment ######
-
-t0 = time.time()
-
-st = SaveTo()
-
-for r_i in range(int(cfg_obj.get("runs"))):
+def run_experiment(cfg_obj, st, ex_id,  r_i):
     seed = np.random.randint(0, 10000000)
-    sim = Simulator(cfg_obj, verbose=verbose, random_seed=seed)
+    sim = Simulator(cfg_obj, verbose=False, random_seed=seed)
+    
     sim.run()
-    if export_data:
+    if True:
         for key in [
             "P_m",
             "D_m",
@@ -61,6 +43,38 @@ for r_i in range(int(cfg_obj.get("runs"))):
         st.export_data(ex_id, sim.data["x_axis"].values(), "x_axis"+ "_" + str(r_i))
         st.export_data(ex_id, sim.data["y_axis"].values(), "y_axis"+ "_" + str(r_i))
 
-t1 = time.time()
-dt = t1 - t0
-print("Time taken: %s" % str(dt), "\n")
+
+
+###### Run experiment ######
+
+if __name__ == "__main__":
+
+    ###### Experiment parameters ######
+
+    ex_id = "e_1"
+    verbose = False
+    export_data = True
+
+    ###### Config class ######
+
+    default_cfg_file = CFG_FILES["default"]
+    cfg_file = CFG_FILES["ex_1"]
+    cfg_obj = Config(cfg_file, default_cfg_file, ex_id=ex_id)
+
+    t0 = time.time()
+    st = SaveTo()
+
+    # Use multithreading to run multiple experiments in parallel
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = list(
+            tqdm(
+                executor.map(run_experiment, [cfg_obj] * int(cfg_obj.get("runs")), [st] * int(cfg_obj.get("runs")), [ex_id] * int(cfg_obj.get("runs")), range(int(cfg_obj.get("runs")))),
+                total=int(cfg_obj.get("runs")),
+                desc="Running experiments",
+            )
+        )
+        
+
+    t1 = time.time()
+    dt = t1 - t0
+    print("Time taken: %s" % str(dt), "\n")
