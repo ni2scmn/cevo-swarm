@@ -1,3 +1,4 @@
+import dis
 from pathlib import Path
 import sys
 
@@ -16,6 +17,7 @@ import json
 from . import Swarm, CA, Warehouse, Robot
 
 from .nn import FeedforwardNN, NNBeliefSpace, random_weight_init, sigmoid, softmax
+from simulator.lib.metrics import distance_to_closest_ap, symmetry
 
 
 class Simulator:
@@ -114,7 +116,6 @@ class Simulator:
 
         culture = cfg.get("culture")
         if "weights" in culture[0]:
-
             for i, agent in enumerate(swarm.agents):
                 swarm.agents[i][0].control_network.set_weights(np.array(culture[0]["weights"]))
 
@@ -157,9 +158,24 @@ class Simulator:
             self.data["box_c"] = {}
         if "rob_c" not in self.data:
             self.data["rob_c"] = {}
+        if "ap_distance" not in self.data:
+            self.data["ap_distance"] = {}
+        if "x_axis" not in self.data:
+            self.data["x_axis"] = {}
+        if "y_axis" not in self.data:
+            self.data["y_axis"] = {}
 
         self.data["box_c"][self.warehouse.counter] = self.warehouse.box_c.tolist()
         self.data["rob_c"][self.warehouse.counter] = self.warehouse.rob_c.tolist()
+        self.data["ap_distance"][self.warehouse.counter] = distance_to_closest_ap(
+            self.warehouse.box_c, np.asarray(self.warehouse.ap)
+        )
+        self.data["x_axis"][self.warehouse.counter] = symmetry(
+            self.warehouse.box_c, (self.warehouse.width, self.warehouse.height), "x_axis")
+        self.data["y_axis"][self.warehouse.counter] = symmetry(
+            self.warehouse.box_c, (self.warehouse.width, self.warehouse.height), "y_axis"
+        )
+
 
     def log_CA_data(self):
         if "P_m" not in self.CA_data:
