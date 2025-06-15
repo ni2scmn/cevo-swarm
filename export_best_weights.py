@@ -28,7 +28,11 @@ def sort_best(train_data_path, desc=True):
 
 
 if __name__ == "__main__":
-    p, f = sort_best("../data/1749922264/1749922264_train_99")
+
+    ex_id = "1749922427"
+    gen = "99"
+
+    p, f = sort_best("../data/{}/{}_train_{}".format(ex_id, ex_id, gen))
     print("Best fitness:", f[0:10])
 
     with open("best_weights.txt", "w") as file:
