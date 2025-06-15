@@ -101,7 +101,7 @@ class Simulator:
                 activation_fun=activation_funcs,
             )
             belief_space = NNBeliefSpace(
-                bs_nn_weights=np.random.uniform(-1, 1, size=control_network.get_weights().shape)
+                bs_nn_weights=control_network.get_weights()
             )
             robot_obj = Robot(
                 cfg.get("robot", "radius"),
@@ -125,6 +125,7 @@ class Simulator:
                     subc["weights"],k=no_agents)
                 for i in range(no_agents):
                     swarm.agents[agent_idx][0].control_network.set_weights(np.array(wgt[i]))
+                    swarm.agents[agent_idx][0].belief_space.set_weights(np.array(wgt[i]))
                     agent_idx += 1
             else:
                 agent_idx += no_agents
@@ -156,7 +157,7 @@ class Simulator:
         while self.warehouse.counter <= self.cfg.get("time_limit"):
             self.iterate()
             if self.export_data:
-                self.log_CA_data()
+                #self.log_CA_data()
                 if self.warehouse.counter in self.export_ts:
                     self.log_data()
 

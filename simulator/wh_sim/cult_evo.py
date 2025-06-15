@@ -218,7 +218,9 @@ class CA(Warehouse):
 
             self.social_transmission.append([id1, id2])
 
-            influencer_params = self.swarm.agents[influencer][0].belief_space.get_weights()
+            # TODO: nn weights -> belief space weights
+            # vs. belief space weights -> belief space weights
+            influencer_params = self.swarm.agents[influencer][0].control_network.get_weights()
             influencee_params = self.swarm.agents[influencee][0].belief_space.get_weights()
 
             # TODO: as update mask not updating every parameter?

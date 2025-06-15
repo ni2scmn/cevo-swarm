@@ -159,7 +159,7 @@ class Pretrain:
             activation_fun=activation_funcs,
         )
         belief_space = NNBeliefSpace(
-            bs_nn_weights=np.random.uniform(-1, 1, size=control_network.get_weights().shape)
+            bs_nn_weights=control_network.get_weights()
         )
         robot_obj = Robot(
             self.cfg.get("robot", "radius"),
