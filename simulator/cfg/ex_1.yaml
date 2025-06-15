@@ -6,6 +6,7 @@ e_1:
   box_type_ratio: [0.33, 0.33, 0.34]
   phase_ratio: [0,0,1]
   phase_change_rate: 10
+  runs: 20
   adaptive_rate_tuning: False
   ap:
     - [0.75,0.75]
