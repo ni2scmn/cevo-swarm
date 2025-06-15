@@ -51,27 +51,29 @@ if __name__ == "__main__":
 
     ###### Experiment parameters ######
 
-    ex_id = "e_1"
+    ex_id = "e_nn_1"
     verbose = False
     export_data = True
 
     ###### Config class ######
 
     default_cfg_file = CFG_FILES["default"]
-    cfg_file = CFG_FILES["ex_1"]
+    cfg_file = CFG_FILES["ex_nn_1"]
     cfg_obj = Config(cfg_file, default_cfg_file, ex_id=ex_id)
 
     t0 = time.time()
     st = SaveTo()
+
+    runs = int(cfg_obj.get("runs"))
     
-    print(st.ts)
+    print(ex_id + "/" + str(st.ts))
 
     # Use multithreading to run multiple experiments in parallel
     with concurrent.futures.ProcessPoolExecutor() as executor:
         results = list(
             tqdm(
-                executor.map(run_experiment, [cfg_obj] * int(cfg_obj.get("runs")), [st] * int(cfg_obj.get("runs")), [ex_id] * int(cfg_obj.get("runs")), range(int(cfg_obj.get("runs")))),
-                total=int(cfg_obj.get("runs")),
+                executor.map(run_experiment, [cfg_obj] * runs, [st] * runs, [ex_id] * runs, range(runs)),
+                total=runs,
                 desc="Running experiments",
             )
         )

@@ -17,7 +17,7 @@ if len(sys.argv) > 2:
 else:
     metric = "x_axis"
 
-csv_files = glob.glob(f"data/e_1/{ex_id}/{metric}*.csv")  # Update the path
+csv_files = glob.glob(f"data/{ex_id}/{metric}*.csv")  # Update the path
 column_name = "0"  # Replace with the actual column name
 
 # Read and aggregate data
@@ -53,4 +53,6 @@ plt.ylim(0, 1)
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+fig = plt.gcf()
+fig.savefig(f"{ex_id}_{metric}_distribution.png".replace("/", "_"), dpi=300, bbox_inches='tight')
 plt.show()

@@ -9,6 +9,7 @@ CFG_FILES = {
     "test": os.path.join(path, "cfg", "test.yaml"),
     "ex_1": os.path.join(path, "cfg", "ex_1.yaml"),
     "ex_2": os.path.join(path, "cfg", "ex_2.yaml"),
+    "ex_nn_1": os.path.join(path, "cfg", "ex_nn_1.yaml"),
 }
 
 # TODO make path dynamic

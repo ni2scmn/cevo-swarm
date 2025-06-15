@@ -4,7 +4,7 @@ from simulator import CFG_FILES, MODEL_ROOT, STATS_ROOT
 import time
 
 
-ex_id = "e_1"
+ex_id = "e_nn_1"
 iterations = 200
 verbose = False
 batch_id = "heading_bias"
@@ -12,7 +12,7 @@ batch_id = "heading_bias"
 ###### Config class ######
 
 default_cfg_file = CFG_FILES["default"]
-cfg_file = CFG_FILES["ex_1"]
+cfg_file = CFG_FILES["ex_nn_1"]
 cfg_obj = Config(cfg_file, default_cfg_file, ex_id=ex_id)
 
 ###### Functions ######
