@@ -12,27 +12,27 @@ def run_experiment(cfg_obj, st, ex_id,  r_i):
     
     sim.run()
     if True:
-        for key in [
-            "P_m",
-            "D_m",
-            "SC",
-            "r0",
-            "BS_P_m",
-            "BS_D_m",
-            "BS_SC",
-            "BS_r0",
-            "r_phase",
-            "influence_rates",
-            "resistance_rates",
-        ]:
-            data = sim.CA_data[key]
-            st.export_data(ex_id, data, key + "_" + str(r_i), transpose=True)
+        # for key in [
+        #     "P_m",
+        #     "D_m",
+        #     "SC",
+        #     "r0",
+        #     "BS_P_m",
+        #     "BS_D_m",
+        #     "BS_SC",
+        #     "BS_r0",
+        #     "r_phase",
+        #     "influence_rates",
+        #     "resistance_rates",
+        # ]:
+        #     data = sim.CA_data[key]
+        #     st.export_data(ex_id, data, key + "_" + str(r_i), transpose=True)
 
         # @TODO remove self_updates variable ? -- data already logged in r_phase
-        for key in ["social_transmission", "self_updates"]:
-            data = sim.CA_data[key]
-            records = [{"timestep": i, key: v} for i, v in data.items()]
-            st.export_data(ex_id, records, key+ "_" + str(r_i))
+        # for key in ["social_transmission", "self_updates"]:
+        #     data = sim.CA_data[key]
+        #     records = [{"timestep": i, key: v} for i, v in data.items()]
+        #     st.export_data(ex_id, records, key+ "_" + str(r_i))
 
         dn = st.export_data(ex_id, sim.data["box_c"], "boxes"+ "_" + str(r_i))
         st.export_data(ex_id, sim.data["rob_c"], "robots"+ "_" + str(r_i))

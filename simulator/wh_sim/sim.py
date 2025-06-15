@@ -156,7 +156,7 @@ class Simulator:
         while self.warehouse.counter <= self.cfg.get("time_limit"):
             self.iterate()
             if self.export_data:
-                self.log_CA_data()
+                #self.log_CA_data()
                 if self.warehouse.counter in self.export_ts:
                     self.log_data()
 
