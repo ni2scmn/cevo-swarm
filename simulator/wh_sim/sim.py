@@ -1,4 +1,5 @@
 import dis
+import math
 from pathlib import Path
 import sys
 
@@ -113,12 +114,21 @@ class Simulator:
 
         swarm.generate()
         swarm.init_params(cfg)
-
+        
+        agent_idx = 0
         culture = cfg.get("culture")
-        if "weights" in culture[0]:
-            for i, agent in enumerate(swarm.agents):
-                swarm.agents[i][0].control_network.set_weights(np.array(culture[0]["weights"]))
-
+        for subc in culture:
+            no_agents = math.floor(swarm.number_of_agents * subc["ratio"])
+            if "weights" in subc:
+                # sample weight from weights
+                wgt = random.choices(
+                    subc["weights"],k=no_agents)
+                for i in range(no_agents):
+                    swarm.agents[agent_idx][0].control_network.set_weights(np.array(wgt[i]))
+                    agent_idx += 1
+            else:
+                agent_idx += no_agents
+                
         return swarm
 
     # iterate method called once per timestep

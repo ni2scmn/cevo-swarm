@@ -5,8 +5,17 @@ import glob
 
 # Configuration
 
-ex_id = "1750002798"
-metric = "x_axis"
+# grab ex_id from command line or set manually
+import sys
+if len(sys.argv) > 1:
+    ex_id = sys.argv[1]
+else:
+    raise ValueError("Please provide an experiment ID as a command line argument.")
+
+if len(sys.argv) > 2:
+    metric = sys.argv[2]
+else:
+    metric = "x_axis"
 
 csv_files = glob.glob(f"data/e_1/{ex_id}/{metric}*.csv")  # Update the path
 column_name = "0"  # Replace with the actual column name
@@ -38,6 +47,9 @@ plt.fill_between(timesteps, lower, upper, alpha=0.3, label='±1 Std Dev', color=
 plt.title("Metric Distribution Over Timesteps")
 plt.xlabel("Timestep")
 plt.ylabel("Metric Value")
+
+plt.ylim(0, 1)
+
 plt.legend()
 plt.grid(True)
 plt.tight_layout()

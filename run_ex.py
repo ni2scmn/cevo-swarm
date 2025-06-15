@@ -63,6 +63,8 @@ if __name__ == "__main__":
 
     t0 = time.time()
     st = SaveTo()
+    
+    print(st.ts)
 
     # Use multithreading to run multiple experiments in parallel
     with concurrent.futures.ProcessPoolExecutor() as executor:
