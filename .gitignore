@@ -8,5 +8,6 @@ animation/
 venv/
 logs/
 
+.DS_Store
 best_weights.txt
 experiment_setups
