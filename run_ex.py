@@ -34,14 +34,16 @@ def run_experiment(cfg_obj, st, ex_id,  r_i):
         #     records = [{"timestep": i, key: v} for i, v in data.items()]
         #     st.export_data(ex_id, records, key+ "_" + str(r_i))
 
-        dn = st.export_data(ex_id, sim.data["box_c"], "boxes"+ "_" + str(r_i))
-        st.export_data(ex_id, sim.data["rob_c"], "robots"+ "_" + str(r_i))
+        dn = st.export_data(ex_id, sim.data["ap_distance"].values(), "ap_distance"+ "_" + str(r_i))
+        st.export_data(ex_id, sim.data["x_axis"].values(), "x_axis"+ "_" + str(r_i))
+        st.export_data(ex_id, sim.data["y_axis"].values(), "y_axis"+ "_" + str(r_i))
+
+        #dn = st.export_data(ex_id, sim.data["box_c"], "boxes"+ "_" + str(r_i))
+        #st.export_data(ex_id, sim.data["rob_c"], "robots"+ "_" + str(r_i))
         st.export_metadata(
             dn, {"box_type_ratio": cfg_obj.get("box_type_ratio"), "ap": cfg_obj.get("ap")}
         )
-        st.export_data(ex_id, sim.data["ap_distance"].values(), "ap_distance"+ "_" + str(r_i))
-        st.export_data(ex_id, sim.data["x_axis"].values(), "x_axis"+ "_" + str(r_i))
-        st.export_data(ex_id, sim.data["y_axis"].values(), "y_axis"+ "_" + str(r_i))
+
 
 
 
