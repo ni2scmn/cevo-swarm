@@ -330,6 +330,8 @@ class Pretrain:
 def set_pretrain_metric(metric_str: str):
     if metric_str == "ap_distance":
         return lambda box_c, ap_c, _dim: -distance_to_closest_ap(box_c, ap_c)
+    if metric_str == "max_ap_distance":
+        return lambda box_c, ap_c, _dim: distance_to_closest_ap(box_c, ap_c)
     elif metric_str == "left_right":
         return lambda box_c, _ap_c, dim: symmetry(box_c, dim, "x_axis")
     elif metric_str == "right_left":
