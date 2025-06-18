@@ -137,8 +137,8 @@ def plot_diversity_over_generations(gens):
 
 if __name__ == "__main__":
     # Example usage
-    base_dir = "data/pretrain"
-    exp_id = "1749941416"
+    base_dir = "../data/1749922427"
+    exp_id = "1749922427"
     gens = read_pops(base_dir, exp_id)
     
     plot_diversity_over_generations(gens)

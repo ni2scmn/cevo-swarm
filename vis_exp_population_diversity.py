@@ -112,7 +112,7 @@ def plot_diversity_over_timesteps_multi(runs_data):
 
 if __name__ == "__main__":
     # Find all nn_weights_*.csv files in the directory
-    run_dir = "data/e_nn_1/1750244174"
+    run_dir = "data/e_ca_nn_1/1750245511"
     run_files = sorted([f for f in os.listdir(run_dir) if re.match(r"nn_weights_\d+\.csv", f)])
     runs_data = []
 

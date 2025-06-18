@@ -158,7 +158,7 @@ class Simulator:
             self.iterate()
             if self.export_data:
                 self.log_CA_data()
-                if self.warehouse.counter in self.export_ts:
+                if self.warehouse.counter in self.export_ts and self.warehouse.counter % 10 == 0:
                     self.log_data()
 
         if self.verbose:
