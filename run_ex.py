@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     ###### Experiment parameters ######
 
-    ex_id = "e_ca_nn_1"
+    ex_id = "e_ca_nn_0"
     verbose = False
     export_data = True
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     print(ex_id + "/" + str(st.ts))
 
     # Use multithreading to run multiple experiments in parallel
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
         results = list(
             tqdm(
                 executor.map(run_experiment, [cfg_obj] * runs, [st] * runs, [ex_id] * runs, range(runs)),

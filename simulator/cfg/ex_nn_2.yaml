@@ -7,8 +7,8 @@ e_ca_nn_0:
   phase_ratio: [0.02, 0.02, 0.96]
   influence_r: 50
   phase_change_rate: 10
-  # time_limit: 50000
-  # export_steps: 50000
+  time_limit: 30000
+  export_steps: 30000
   runs: 10
   adaptive_rate_tuning: False
   ap:
@@ -20,7 +20,7 @@ e_ca_nn_0:
       params: [0.35,0.5,0.03,0.15, 0.35,0.5,0.03,0.15, 0.35,0.5,0.03,0.15]
       # order: Pm, D_m, SC, r0
       use_fixed_rates: True # Same across all agents in a subculture,
-      influence_rate: 0.2
+      influence_rate: 0.5
       resistance_rate: 0.5
       weights: 
       # 1749941416 - 299
@@ -38,7 +38,7 @@ e_ca_nn_0:
       params: [0.35,0.5,0.03,0.15, 0.35,0.5,0.03,0.15, 0.35,0.5,0.03,0.15]
       # order: Pm, D_m, SC, r0
       use_fixed_rates: True # Same across all agents in a subculture,
-      influence_rate: 0.2
+      influence_rate: 0.5
       resistance_rate: 0.5
       weights: 
       # 1749922427 - 99
