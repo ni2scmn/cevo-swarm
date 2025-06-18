@@ -48,7 +48,8 @@ plt.title("Metric Distribution Over Timesteps")
 plt.xlabel("Timestep")
 plt.ylabel("Metric Value")
 
-plt.ylim(0, 1)
+if metric == "x_axis" or metric == "y_axis":
+    plt.ylim(0, 1)
 
 plt.legend()
 plt.grid(True)
