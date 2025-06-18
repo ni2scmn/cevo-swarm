@@ -38,6 +38,9 @@ def run_experiment(cfg_obj, st, ex_id,  r_i):
         st.export_data(ex_id, sim.data["x_axis"].values(), "x_axis"+ "_" + str(r_i))
         st.export_data(ex_id, sim.data["y_axis"].values(), "y_axis"+ "_" + str(r_i))
 
+        st.export_data(ex_id, sim.data["nn_weights"], "nn_weights"+ "_" + str(r_i), transpose=True)
+        st.export_data(ex_id, sim.data["belief_space_weights"], "belief_space_weights"+ "_" + str(r_i))
+
         #dn = st.export_data(ex_id, sim.data["box_c"], "boxes"+ "_" + str(r_i))
         #st.export_data(ex_id, sim.data["rob_c"], "robots"+ "_" + str(r_i))
         st.export_metadata(
@@ -79,6 +82,11 @@ if __name__ == "__main__":
                 desc="Running experiments",
             )
         )
+
+    # non parallel version
+    # for r_i in range(runs):
+    #     run_experiment(cfg_obj, st, ex_id, r_i)
+
         
 
     t1 = time.time()

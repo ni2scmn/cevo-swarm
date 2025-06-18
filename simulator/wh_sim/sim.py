@@ -157,7 +157,7 @@ class Simulator:
         while self.warehouse.counter <= self.cfg.get("time_limit"):
             self.iterate()
             if self.export_data:
-                #self.log_CA_data()
+                self.log_CA_data()
                 if self.warehouse.counter in self.export_ts:
                     self.log_data()
 
@@ -175,9 +175,24 @@ class Simulator:
             self.data["x_axis"] = {}
         if "y_axis" not in self.data:
             self.data["y_axis"] = {}
+        if "nn_weights" not in self.data:
+            self.data["nn_weights"] = {}
+        if "belief_space_weights" not in self.data:
+            self.data["belief_space_weights"] = {}
 
         self.data["box_c"][self.warehouse.counter] = self.warehouse.box_c.tolist()
         self.data["rob_c"][self.warehouse.counter] = self.warehouse.rob_c.tolist()
+
+        self.data["nn_weights"][self.warehouse.counter] = [
+            agent[0].control_network.get_weights().tolist() for agent in self.swarm.agents
+        ]
+
+        self.data["belief_space_weights"][self.warehouse.counter] = [
+            agent[0].belief_space.get_weights().tolist() for agent in self.swarm.agents
+        ]
+
+
+
         self.data["ap_distance"][self.warehouse.counter] = distance_to_closest_ap(
             self.warehouse.box_c, np.asarray(self.warehouse.ap)
         )
@@ -189,22 +204,22 @@ class Simulator:
 
 
     def log_CA_data(self):
-        if "P_m" not in self.CA_data:
-            self.CA_data["P_m"] = {}
-        if "D_m" not in self.CA_data:
-            self.CA_data["D_m"] = {}
-        if "SC" not in self.CA_data:
-            self.CA_data["SC"] = {}
-        if "r0" not in self.CA_data:
-            self.CA_data["r0"] = {}
-        if "BS_P_m" not in self.CA_data:
-            self.CA_data["BS_P_m"] = {}
-        if "BS_D_m" not in self.CA_data:
-            self.CA_data["BS_D_m"] = {}
-        if "BS_SC" not in self.CA_data:
-            self.CA_data["BS_SC"] = {}
-        if "BS_r0" not in self.CA_data:
-            self.CA_data["BS_r0"] = {}
+        # if "P_m" not in self.CA_data:
+        #     self.CA_data["P_m"] = {}
+        # if "D_m" not in self.CA_data:
+        #     self.CA_data["D_m"] = {}
+        # if "SC" not in self.CA_data:
+        #     self.CA_data["SC"] = {}
+        # if "r0" not in self.CA_data:
+        #     self.CA_data["r0"] = {}
+        # if "BS_P_m" not in self.CA_data:
+        #     self.CA_data["BS_P_m"] = {}
+        # if "BS_D_m" not in self.CA_data:
+        #     self.CA_data["BS_D_m"] = {}
+        # if "BS_SC" not in self.CA_data:
+        #     self.CA_data["BS_SC"] = {}
+        # if "BS_r0" not in self.CA_data:
+        #     self.CA_data["BS_r0"] = {}
         if "social_transmission" not in self.CA_data:
             self.CA_data["social_transmission"] = {}
         if "self_updates" not in self.CA_data:
@@ -216,14 +231,14 @@ class Simulator:
         if "resistance_rates" not in self.CA_data:
             self.CA_data["resistance_rates"] = {}
 
-        self.CA_data["P_m"][self.warehouse.counter] = self.swarm.P_m.tolist()
-        self.CA_data["D_m"][self.warehouse.counter] = self.swarm.D_m.tolist()
-        self.CA_data["SC"][self.warehouse.counter] = self.swarm.SC.tolist()
-        self.CA_data["r0"][self.warehouse.counter] = self.swarm.r0.tolist()
-        self.CA_data["BS_P_m"][self.warehouse.counter] = self.swarm.BS_P_m.tolist()
-        self.CA_data["BS_D_m"][self.warehouse.counter] = self.swarm.BS_D_m.tolist()
-        self.CA_data["BS_SC"][self.warehouse.counter] = self.swarm.BS_SC.tolist()
-        self.CA_data["BS_r0"][self.warehouse.counter] = self.swarm.BS_r0.tolist()
+        # self.CA_data["P_m"][self.warehouse.counter] = self.swarm.P_m.tolist()
+        # self.CA_data["D_m"][self.warehouse.counter] = self.swarm.D_m.tolist()
+        # self.CA_data["SC"][self.warehouse.counter] = self.swarm.SC.tolist()
+        # self.CA_data["r0"][self.warehouse.counter] = self.swarm.r0.tolist()
+        # self.CA_data["BS_P_m"][self.warehouse.counter] = self.swarm.BS_P_m.tolist()
+        # self.CA_data["BS_D_m"][self.warehouse.counter] = self.swarm.BS_D_m.tolist()
+        # self.CA_data["BS_SC"][self.warehouse.counter] = self.swarm.BS_SC.tolist()
+        # self.CA_data["BS_r0"][self.warehouse.counter] = self.swarm.BS_r0.tolist()
         self.CA_data["social_transmission"][self.warehouse.counter] = (
             self.warehouse.social_transmission
         )
@@ -234,14 +249,14 @@ class Simulator:
             self.swarm.resistance_rate.tolist()
         )
 
-        self.CA_data["P_m"][self.warehouse.counter] = self.swarm.P_m.tolist()
-        self.CA_data["D_m"][self.warehouse.counter] = self.swarm.D_m.tolist()
-        self.CA_data["SC"][self.warehouse.counter] = self.swarm.SC.tolist()
-        self.CA_data["r0"][self.warehouse.counter] = self.swarm.r0.tolist()
-        self.CA_data["BS_P_m"][self.warehouse.counter] = self.swarm.BS_P_m.tolist()
-        self.CA_data["BS_D_m"][self.warehouse.counter] = self.swarm.BS_D_m.tolist()
-        self.CA_data["BS_SC"][self.warehouse.counter] = self.swarm.BS_SC.tolist()
-        self.CA_data["BS_r0"][self.warehouse.counter] = self.swarm.BS_r0.tolist()
+        # self.CA_data["P_m"][self.warehouse.counter] = self.swarm.P_m.tolist()
+        # self.CA_data["D_m"][self.warehouse.counter] = self.swarm.D_m.tolist()
+        # self.CA_data["SC"][self.warehouse.counter] = self.swarm.SC.tolist()
+        # self.CA_data["r0"][self.warehouse.counter] = self.swarm.r0.tolist()
+        # self.CA_data["BS_P_m"][self.warehouse.counter] = self.swarm.BS_P_m.tolist()
+        # self.CA_data["BS_D_m"][self.warehouse.counter] = self.swarm.BS_D_m.tolist()
+        # self.CA_data["BS_SC"][self.warehouse.counter] = self.swarm.BS_SC.tolist()
+        # self.CA_data["BS_r0"][self.warehouse.counter] = self.swarm.BS_r0.tolist()
         self.CA_data["social_transmission"][self.warehouse.counter] = (
             self.warehouse.social_transmission
         )
