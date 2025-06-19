@@ -153,7 +153,6 @@ if __name__ == "__main__":
     # Find all nn_weights_*.csv files in the directory
     run_dir = sys.argv[1]
     run_files = sorted([f for f in os.listdir(run_dir) if re.match(r"nn_weights_\d+\.csv", f)])
-    run_files = run_files[:5]  # Limit to first 5 files for testing
     runs_data = []
 
     with concurrent.futures.ProcessPoolExecutor() as executor:

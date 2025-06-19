@@ -2,9 +2,11 @@ import os
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import sys
 
 # --- Config ---
-base_folder = "data/e_ca_nn_0/1750334037"  # Replace this
+base_folder = sys.argv[1]
 file_pattern = "social_transmission_*.csv"
 
 # --- Define Groups ---
@@ -69,7 +71,9 @@ df_all = df_all.sort_index()
 # --- Plotting ---
 plt.figure(figsize=(10, 6))
 for pair, label in group_names.items():
-    plt.plot(df_all.index, df_all[pair], label=label)
+    # plot with jitter for better visibility
+    jitter = np.random.normal(0, 0.05, size=df_all[pair].shape)
+    plt.plot(df_all.index, df_all[pair] + jitter, label=label)
 
 plt.title("Average Accumulated Social Transmissions Over Time")
 plt.xlabel("Timestep")
