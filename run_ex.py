@@ -3,6 +3,7 @@ from simulator.lib import Config, SaveTo
 from simulator import CFG_FILES
 import time
 import numpy as np
+import sys
 
 ###### Functions ######
 
@@ -56,14 +57,17 @@ if __name__ == "__main__":
 
     ###### Experiment parameters ######
 
-    ex_id = "e_ca_nn_0"
+    # get command line arguments
+    ex_file = sys.argv[1]
+    ex_id = sys.argv[2]
+
     verbose = False
     export_data = True
 
     ###### Config class ######
 
     default_cfg_file = CFG_FILES["default"]
-    cfg_file = CFG_FILES["ex_nn_2"]
+    cfg_file = CFG_FILES[ex_file]
     cfg_obj = Config(cfg_file, default_cfg_file, ex_id=ex_id)
 
     t0 = time.time()
