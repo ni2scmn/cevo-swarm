@@ -30,10 +30,15 @@ def run_experiment(cfg_obj, st, ex_id,  r_i):
         #     st.export_data(ex_id, data, key + "_" + str(r_i), transpose=True)
 
         # @TODO remove self_updates variable ? -- data already logged in r_phase
-        # for key in ["social_transmission", "self_updates"]:
-        #     data = sim.CA_data[key]
-        #     records = [{"timestep": i, key: v} for i, v in data.items()]
-        #     st.export_data(ex_id, records, key+ "_" + str(r_i))
+        for key in ["social_transmission"]:
+            data = sim.CA_data[key]
+            records = []
+            for i, v in data.items():
+                for vi in v:
+                    records.append((i, vi[0], vi[1]))
+            st.export_data(ex_id, records, key+ "_" + str(r_i))
+
+        # st.export_data(ex_id, sim.CA_data["social_transmission"], "social_transmission"+ "_" + str(r_i), transpose=True)
 
         dn = st.export_data(ex_id, sim.data["ap_distance"].values(), "ap_distance"+ "_" + str(r_i))
         st.export_data(ex_id, sim.data["x_axis"].values(), "x_axis"+ "_" + str(r_i))

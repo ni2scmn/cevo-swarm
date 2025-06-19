@@ -217,6 +217,8 @@ class CA(Warehouse):
                 used.update([id1, id2])
 
             self.social_transmission.append([id1, id2])
+            if rate1 == rate2:
+                self.social_transmission.append([id2, id1])
 
             # TODO: nn weights -> belief space weights
             # vs. belief space weights -> belief space weights
