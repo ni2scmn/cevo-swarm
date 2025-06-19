@@ -158,7 +158,7 @@ class Simulator:
             self.iterate()
             if self.export_data:
                 self.log_CA_data()
-                if self.warehouse.counter in self.export_ts and self.warehouse.counter % 10 == 0:
+                if self.warehouse.counter in self.export_ts and self.warehouse.counter % 20 == 0:
                     self.log_data()
 
         if self.verbose:
@@ -180,8 +180,8 @@ class Simulator:
         if "belief_space_weights" not in self.data:
             self.data["belief_space_weights"] = {}
 
-        self.data["box_c"][self.warehouse.counter] = self.warehouse.box_c.tolist()
-        self.data["rob_c"][self.warehouse.counter] = self.warehouse.rob_c.tolist()
+#        self.data["box_c"][self.warehouse.counter] = self.warehouse.box_c.tolist()
+#        self.data["rob_c"][self.warehouse.counter] = self.warehouse.rob_c.tolist()
 
         self.data["nn_weights"][self.warehouse.counter] = [
             agent[0].control_network.get_weights().tolist() for agent in self.swarm.agents
