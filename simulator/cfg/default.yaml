@@ -12,8 +12,8 @@ warehouse:
   box_radius: 5.0
   width: 500
   height: 500
-  number_of_agents: 10
-  number_of_boxes: 100
+  number_of_agents: 20
+  number_of_boxes: 200
   repulsion_wall: 25
   repulsion_object: 5
   object_position: 0
@@ -30,11 +30,9 @@ train:
 
 faults: []
 
-time_limit: 20000
 animate: False
 save_animation: False
 export_data: True
-export_steps: 20000
 heading_bias: False
 box_attraction: True
 heading_change_rate: 10 # ticks per change in heading
