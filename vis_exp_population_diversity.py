@@ -21,9 +21,8 @@ def read_weights_from_csv(file_path):
             ts_weights = []
             for weight_str in row:
                 try:
-                    # Try to parse the string as a Python list
-                    weights = ast.literal_eval(weight_str)
-                    if isinstance(weights, list):
+                    weights = np.fromstring(weight_str.strip('[]'), sep=',')
+                    if isinstance(weights, list) or isinstance(weights, np.ndarray):
                         ts_weights.append(weights)
                 except (ValueError, SyntaxError):
                     continue  # Skip header or malformed entries
@@ -47,43 +46,16 @@ def diversity_pairwise_distance(population):
         float: The average pairwise distance.
     """
     # print(population.shape)
-    distances_ic = cdist(population[0:5], population[5:10], metric='cosine')
-    distances_c1 = pdist(population[0:5], metric='cosine')
-    distances_c2 = pdist(population[5:10], metric='cosine')
+
+    pop_c1_size = int(population.shape[0] * fraction_c1)
+
+
+    distances_ic = cdist(population[0:pop_c1_size], population[pop_c1_size:10], metric='cosine')
+    distances_c1 = pdist(population[0:pop_c1_size], metric='cosine')
+    distances_c2 = pdist(population[pop_c1_size:10], metric='cosine')
     distances = pdist(population, metric='cosine')
+    #print(f"ic: {np.mean(distances_ic)}, c1: {np.mean(distances_c1)}, c2: {np.mean(distances_c2)}, all: {np.mean(distances)}")
     return (np.mean(distances_ic), np.mean(distances_c1), np.mean(distances_c2), np.mean(distances))
-
-def plot_diversity_over_timesteps(data):
-    """
-    Plots the average pairwise distance for each timestep.
-
-    Args:
-        data (list): A list of tuples containing timestep and population.
-    """
-    avg_distances_ic = []
-    avg_distances_c1 = []
-    avg_distances_c2 = []
-    avg_distances = []
-    timesteps = []
-
-    for timestep, population in data:
-        avg_distance_ic, avg_distance_c1, avg_distance_c2, avg_distance = diversity_pairwise_distance(np.array(population))
-        avg_distances_ic.append(avg_distance_ic)
-        avg_distances_c1.append(avg_distance_c1)
-        avg_distances_c2.append(avg_distance_c2)
-        avg_distances.append(avg_distance)
-        timesteps.append(timestep)
-
-    plt.figure(figsize=(10, 5))
-    plt.plot(timesteps, avg_distances, marker='o')
-    plt.plot(timesteps, avg_distances_c1, marker='o', label='C1 Avg Distance')
-    plt.plot(timesteps, avg_distances_c2, marker='o', label='C2 Avg Distance')
-    plt.title('Average Pairwise Distance Over Timesteps')
-    plt.xlabel('Timestep')
-    plt.ylabel('Average Pairwise Distance')
-    plt.grid()
-    plt.show()
-
 
 def plot_diversity_over_timesteps_multi(runs_data):
     """
@@ -152,7 +124,11 @@ def plot_diversity_over_timesteps_multi(runs_data):
 if __name__ == "__main__":
     # Find all nn_weights_*.csv files in the directory
     run_dir = sys.argv[1]
+    fraction_c1 = float(sys.argv[2]) if len(sys.argv) > 2 else 0.5
+
     run_files = sorted([f for f in os.listdir(run_dir) if re.match(r"nn_weights_\d+\.csv", f)])
+    print("WARINING: SELECTING FIRST 6 FILES FOR PERFORMANCE")
+    run_files = run_files[:6]  # Limit to first  6 files for performance
     runs_data = []
 
     with concurrent.futures.ProcessPoolExecutor() as executor:

@@ -82,8 +82,13 @@ if __name__ == "__main__":
     
     print(ex_id + "/" + str(st.ts))
 
+    if cfg_obj.get("time_limit") > 50000:
+        max_workers = 5
+    else:
+        max_workers = None
+
     # Use multithreading to run multiple experiments in parallel
-    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         results = list(
             tqdm(
                 executor.map(run_experiment, [cfg_obj] * runs, [st] * runs, [ex_id] * runs, range(runs)),
